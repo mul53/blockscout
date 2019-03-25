@@ -1,4 +1,5 @@
-﻿#, elixir-format
+#, elixir-format
+#: lib/block_scout_web/views/address_token_balance_view.ex:7
 #: lib/block_scout_web/views/address_token_balance_view.ex:7
 msgid "%{count} token"
 msgid_plural "%{count} tokens"
@@ -24,20 +25,24 @@ msgstr ""
 
 #, elixir-format
 #: lib/block_scout_web/templates/address/_metatags.html.eex:3
+#: lib/block_scout_web/templates/address/_metatags.html.eex:3
 msgid "%{address} - %{subnetwork} Explorer"
 msgstr ""
 
 #, elixir-format
+#: lib/block_scout_web/templates/block/overview.html.eex:8
 #: lib/block_scout_web/templates/block/overview.html.eex:8
 msgid "%{block_type} Details"
 msgstr ""
 
 #, elixir-format
 #: lib/block_scout_web/templates/block/overview.html.eex:15
+#: lib/block_scout_web/templates/block/overview.html.eex:15
 msgid "%{block_type} Height:"
 msgstr ""
 
 #, elixir-format
+#: lib/block_scout_web/templates/block/index.html.eex:10
 #: lib/block_scout_web/templates/block/index.html.eex:10
 msgid "%{block_type}s"
 msgstr ""
@@ -50,10 +55,12 @@ msgstr ""
 
 #, elixir-format
 #: lib/block_scout_web/templates/chain/_metatags.html.eex:2
+#: lib/block_scout_web/templates/chain/_metatags.html.eex:2
 msgid "%{subnetwork} %{network} Explorer"
 msgstr ""
 
 #, elixir-format
+#: lib/block_scout_web/templates/layout/_default_title.html.eex:2
 #: lib/block_scout_web/templates/layout/_default_title.html.eex:2
 msgid "%{subnetwork} Explorer - BlockScout"
 msgstr ""
@@ -98,10 +105,12 @@ msgstr ""
 
 #, elixir-format
 #: lib/block_scout_web/templates/api_docs/_metatags.html.eex:4
+#: lib/block_scout_web/templates/api_docs/_metatags.html.eex:4
 msgid "API endpoints for the %{subnetwork}"
 msgstr ""
 
 #, elixir-format
+#: lib/block_scout_web/templates/api_docs/_metatags.html.eex:2
 #: lib/block_scout_web/templates/api_docs/_metatags.html.eex:2
 msgid "API for the %{subnetwork} - BlockScout"
 msgstr ""
@@ -189,6 +198,7 @@ msgstr ""
 
 #, elixir-format
 #: lib/block_scout_web/templates/block/_metatags.html.eex:3
+#: lib/block_scout_web/templates/block/_metatags.html.eex:3
 msgid "Block %{block_number} - %{subnetwork} Explorer"
 msgstr ""
 
@@ -203,6 +213,7 @@ msgid "Block Details"
 msgstr ""
 
 #, elixir-format
+#: lib/block_scout_web/templates/block/overview.html.eex:13
 #: lib/block_scout_web/templates/block/overview.html.eex:13
 msgid "Block Height: %{height}"
 msgstr ""
@@ -228,6 +239,7 @@ msgid "Block not found, please try again later."
 msgstr ""
 
 #, elixir-format
+#: lib/block_scout_web/templates/chain/_metatags.html.eex:4
 #: lib/block_scout_web/templates/chain/_metatags.html.eex:4
 msgid "BlockScout provides analytics data, API, and Smart Contract tools for the %{subnetwork}"
 msgstr ""
@@ -1232,6 +1244,7 @@ msgstr ""
 
 #, elixir-format
 #: lib/block_scout_web/templates/block/_tile.html.eex:48
+#: lib/block_scout_web/templates/block/_tile.html.eex:48
 #: lib/block_scout_web/templates/chain/_block.html.eex:24
 #: lib/block_scout_web/views/internal_transaction_view.ex:28
 msgid "Reward"
@@ -1413,6 +1426,7 @@ msgid "This API is provided to support some rpc methods in the exact format spec
 msgstr ""
 
 #, elixir-format
+#: lib/block_scout_web/views/block_transaction_view.ex:11
 #: lib/block_scout_web/views/block_transaction_view.ex:11
 msgid "This block has not been processed yet."
 msgstr ""
@@ -1974,7 +1988,14 @@ msgstr ""
 msgid "page"
 msgstr ""
 
-#, elixir-format, fuzzy
+#, elixir-format
+#: lib/block_scout_web/templates/transaction/overview.html.eex:85
 #: lib/block_scout_web/templates/transaction/overview.html.eex:85
 msgid "Transaction Speed"
+msgstr ""
+
+#, elixir-format
+#: lib/block_scout_web/templates/layout/_topnav.html.eex:107
+#: lib/block_scout_web/templates/layout/_topnav.html.eex:107
+msgid "Fuse"
 msgstr ""
