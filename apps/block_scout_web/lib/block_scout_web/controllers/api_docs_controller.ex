@@ -1,6 +1,7 @@
 defmodule BlockScoutWeb.APIDocsController do
   use BlockScoutWeb, :controller
 
+  alias BlockScoutWeb.API.RPC.EthController
   alias BlockScoutWeb.Etherscan
   alias Explorer.EthRPC
 

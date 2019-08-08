@@ -83,6 +83,5 @@
         <%= gettext("Version") %>: <%= release_link %>
       </div>
     <% end %>
-    -->
   </div>
 </footer>

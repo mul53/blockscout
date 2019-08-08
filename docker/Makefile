@@ -1,14 +1,11 @@
 SYSTEM = $(shell uname -s)
-HOST = host.docker.internal
 DOCKER_IMAGE = blockscout_prod
 BS_CONTAINER_NAME = blockscout
 PG_CONTAINER_NAME = postgres
 PG_CONTAINER_IMAGE = postgres:10.10
 THIS_FILE = $(lastword $(MAKEFILE_LIST))
 
-ifeq ($(SYSTEM), Linux)
-	HOST=localhost
-endif
+DB_URL = postgresql://$(DB_USER):$(DB_PASS)@$(DB_HOST)/$(DB_NAME)?ssl=true
 
 DB_URL = postgresql://postgres:@$(HOST):5432/explorer?ssl=false
 BLOCKSCOUT_CONTAINER_PARAMS = -e 'MIX_ENV=prod' \
@@ -231,7 +228,9 @@ ifdef GAS_PRICE
 endif
 
 HAS_BLOCKSCOUT_IMAGE := $(shell docker images | grep ${DOCKER_IMAGE})
-build: 
+
+build:
+	@echo "==> Database URL $(DB_URL)"
 	@echo "==> Checking for blockscout image $(DOCKER_IMAGE)"
 ifdef HAS_BLOCKSCOUT_IMAGE
 	@echo "==> Image exist. Using $(DOCKER_IMAGE)"
@@ -240,46 +239,24 @@ else
 	@docker build --build-arg COIN="$(COIN)" -f ./Dockerfile -t $(DOCKER_IMAGE) ../
 endif
 
-migrate: build postgres
+migrate: build
 	@echo "==> Running migrations"
 	@docker run --rm \
 					$(BLOCKSCOUT_CONTAINER_PARAMS) \
 					$(DOCKER_IMAGE) /bin/sh -c "echo $$MIX_ENV && mix do ecto.create, ecto.migrate"
 
-
-PG_EXIST := $(shell docker ps -a --filter name=${PG_CONTAINER_NAME} | grep ${PG_CONTAINER_NAME})
-PG_STARTED := $(shell docker ps --filter name=${PG_CONTAINER_NAME} | grep ${PG_CONTAINER_NAME})
-postgres:
-ifdef PG_EXIST
-	@echo "==> Checking PostrgeSQL container"
-ifdef PG_STARTED
-	@echo "==> PostgreSQL Already started"
-else
-	@echo "==> Starting PostgreSQL container"
-	@docker start $(PG_CONTAINER_NAME)
-endif
-else
-	@echo "==> Creating new PostgreSQL container"
-	@docker run -d --name $(PG_CONTAINER_NAME) \
-					-e POSTGRES_PASSWORD="" \
-					-e POSTGRES_USER="postgres" \
-					-p 5432:5432 \
-					$(PG_CONTAINER_IMAGE)
-	@sleep 1
-	@$(MAKE) -f $(THIS_FILE) migrate
-endif
-
-start: build postgres 
+start: build
 	@echo "==> Starting blockscout"
 	@docker run --rm --name $(BS_CONTAINER_NAME) \
 					$(BLOCKSCOUT_CONTAINER_PARAMS) \
 					-p 4000:4000 \
-					$(DOCKER_IMAGE) /bin/sh -c "mix phx.server"
+					--restart=on-failure \
+					$(DOCKER_IMAGE) \
+					/bin/sh -c "mix phx.server"
 
 run: start
 
 .PHONY: build \
 				migrate \
 				start \
-				postgres \
-				run 
+				run

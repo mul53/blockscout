@@ -144,7 +144,8 @@ defmodule Indexer.Block.Catchup.Fetcher do
     with {:import, {:ok, imported} = ok} <- {:import, Chain.import(full_chain_import_options)} do
       async_import_remaining_block_data(
         imported,
-        Map.put(async_import_remaining_block_data_options, :block_rewards, %{errors: block_reward_errors})
+        Map.put(async_import_remaining_block_data_options, :block_rewards, %{errors: block_reward_errors}),
+        json_rpc_named_arguments
       )
 
       ok
@@ -158,7 +159,7 @@ defmodule Indexer.Block.Catchup.Fetcher do
     async_import_block_rewards(block_reward_errors)
     async_import_coin_balances(imported, options)
     async_import_created_contract_codes(imported)
-    async_import_internal_transactions(imported)
+    async_import_internal_transactions(imported, Keyword.get(json_rpc_named_arguments, :variant))
     async_import_tokens(imported)
     async_import_token_balances(imported)
     async_import_uncles(imported)
