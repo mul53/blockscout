@@ -5,9 +5,10 @@ import numeral from 'numeral'
 import socket from '../socket'
 import { exchangeRateChannel, formatUsdValue } from '../lib/currency'
 import { createStore, connectElements } from '../lib/redux_helpers.js'
-import { batchChannel } from '../lib/utils'
+import { batchChannel, poll } from '../lib/utils'
 import listMorph from '../lib/list_morph'
 import { createMarketHistoryChart } from '../lib/market_history_chart'
+import { getActiveValidators } from '../lib/smart_contract/consensus'
 
 const BATCH_THRESHOLD = 6
 
@@ -25,7 +26,8 @@ export const initialState = {
   transactionsLoading: true,
   transactionCount: null,
   usdMarketCap: null,
-  blockCount: null
+  blockCount: null,
+  validatorCount: null
 }
 
 export const reducer = withMissingBlocks(baseReducer)
@@ -111,6 +113,8 @@ function baseReducer (state = initialState, action) {
       return Object.assign({}, state, { transactionsError: true })
     case 'FINISH_TRANSACTIONS_FETCH':
       return Object.assign({}, state, { transactionsLoading: false })
+    case 'RECEIVED_NEW_VALIDATOR_COUNT':
+      return Object.assign({}, state, { validatorCount: action.msg })
     default:
       return state
   }
@@ -245,6 +249,12 @@ const elements = {
       $channelBatching.show()
       $el[0].innerHTML = numeral(state.transactionsBatch.length).format()
     }
+  },
+  '[data-selector="validator-count"]': {
+    render ($el, state, oldState) {
+      if (state.validatorCount === oldState.validatorCount) return
+      $el.empty().append(state.validatorCount)
+    }
   }
 }
 
@@ -284,6 +294,15 @@ if ($chainDetailsPage.length) {
     type: 'RECEIVED_NEW_TRANSACTION_BATCH',
     msgs: humps.camelizeKeys(msgs)
   })))
+
+  poll(getActiveValidators, 5000,
+    (response) => {
+      store.dispatch({
+        type: 'RECEIVED_NEW_VALIDATOR_COUNT',
+        msg: response
+      })
+    }
+  ).subscribe()
 }
 
 function loadTransactions (store) {
