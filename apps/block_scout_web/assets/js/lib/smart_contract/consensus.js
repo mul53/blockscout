@@ -18,6 +18,11 @@ async function currentCycleStartBlock () {
   return block
 }
 
+async function decimals () {
+  const d = await consensus.methods.DECIMALS.call()
+  return d
+}
+
 async function currentCycleEndBlock () {
   const block = await consensus.methods.getCurrentCycleEndBlock.call()
   return block
@@ -30,7 +35,8 @@ export async function getActiveValidators () {
 
 export async function getTotalStacked () {
   const total = await web3.eth.getBalance(CONSENSUS_ADDRESS)
-  return total
+  const dec = await decimals()
+  return total / dec
 }
 
 export async function getCycleEnd () {
@@ -40,6 +46,7 @@ export async function getCycleEnd () {
 }
 
 export async function getCurrentCycleBlocks () {
-  const blocks = await currentCycleStartBlock() - await currentCycleEndBlock()
-  return blocks
+  const startBlock = await currentCycleStartBlock()
+  const endBlock = await currentCycleEndBlock()
+  return `${startBlock}-${endBlock}`
 }

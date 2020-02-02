@@ -8,7 +8,7 @@ import { createStore, connectElements } from '../lib/redux_helpers.js'
 import { batchChannel, poll } from '../lib/utils'
 import listMorph from '../lib/list_morph'
 import { createMarketHistoryChart } from '../lib/market_history_chart'
-import { getActiveValidators } from '../lib/smart_contract/consensus'
+import { getActiveValidators, getTotalStacked, getCurrentCycleBlocks, getCycleEnd } from '../lib/smart_contract/consensus'
 
 const BATCH_THRESHOLD = 6
 
@@ -27,7 +27,10 @@ export const initialState = {
   transactionCount: null,
   usdMarketCap: null,
   blockCount: null,
-  validatorCount: null
+  validatorCount: null,
+  stackCount: null,
+  currentCycleBlocks: null,
+  cycleEnd: null
 }
 
 export const reducer = withMissingBlocks(baseReducer)
@@ -115,6 +118,12 @@ function baseReducer (state = initialState, action) {
       return Object.assign({}, state, { transactionsLoading: false })
     case 'RECEIVED_NEW_VALIDATOR_COUNT':
       return Object.assign({}, state, { validatorCount: action.msg })
+    case 'RECEIVED_NEW_STACK_COUNT':
+      return Object.assign({}, state, { stackCount: action.msg })
+    case 'RECEIVED_CURRENT_CYCLE_BLOCKS':
+      return Object.assign({}, state, { currentCycleBlocks: action.msg })
+    case 'RECEIVED_CYCLE_END_COUNT':
+      return Object.assign({}, state, { cycleEnd: action.msg })
     default:
       return state
   }
@@ -255,6 +264,24 @@ const elements = {
       if (state.validatorCount === oldState.validatorCount) return
       $el.empty().append(state.validatorCount)
     }
+  },
+  '[data-selector="stack-count"]': {
+    render ($el, state, oldState) {
+      if (state.stackCount === oldState.stackCount) return
+      $el.empty().append(numeral(state.stackCount).format('0,0'))
+    }
+  },
+  '[data-selector="current-cycle-blocks"]': {
+    render ($el, state, oldState) {
+      if (state.currentCycleBlocks === oldState.currentCycleBlocks) return
+      $el.empty().append(state.currentCycleBlocks)
+    }
+  },
+  '[data-selector="cycle-end"]': {
+    render ($el, state, oldState) {
+      if (state.cycleEnd === oldState.cycleEnd) return
+      $el.empty().append(state.cycleEnd)
+    }
   }
 }
 
@@ -296,10 +323,37 @@ if ($chainDetailsPage.length) {
   })))
 
   poll(getActiveValidators, 5000,
-    (response) => {
+    (data) => {
       store.dispatch({
         type: 'RECEIVED_NEW_VALIDATOR_COUNT',
-        msg: response
+        msg: data
+      })
+    }
+  ).subscribe()
+
+  poll(getTotalStacked, 5000,
+    (data) => {
+      store.dispatch({
+        type: 'RECEIVED_NEW_STACK_COUNT',
+        msg: data
+      })
+    }
+  ).subscribe()
+
+  poll(getCurrentCycleBlocks, 5000,
+    (data) => {
+      store.dispatch({
+        type: 'RECEIVED_CURRENT_CYCLE_BLOCKS',
+        msg: data
+      })
+    }
+  ).subscribe()
+
+  poll(getCycleEnd, 5000,
+    (data) => {
+      store.dispatch({
+        type: 'RECEIVED_CYCLE_END_COUNT',
+        msg: data
       })
     }
   ).subscribe()
