@@ -233,3 +233,41 @@ $card-tab-icon-color-active: #20b760 !default;
     }
   }
 }
+
+.dashboard-banner-card-title {
+  font-size: 14px;
+  color: #9a9a9a;
+
+  &+i {
+    font-size: 1rem;
+  }
+
+  &+.fa-exchange-alt {
+    color: var(--green);
+  }
+
+  &+.fa-wallet {
+    color: var(--purple);
+  }
+
+  &+.fa-database {
+    color: var(--yellow);
+  }
+
+  &+.fa-users {
+    color: var(--orange);
+  }
+
+  &+.fa-circle-notch {
+    color: var(--yellow);
+  }
+}
+
+.dashboard-banner-card-value {
+  font-size: 1.5rem;
+  color: #a3a9b5; 
+
+  .symbol {
+    font-size: 14px;
+  }
+}
