@@ -8,7 +8,7 @@ import { createStore, connectElements } from '../lib/redux_helpers.js'
 import { batchChannel, poll } from '../lib/utils'
 import listMorph from '../lib/list_morph'
 import { createMarketHistoryChart } from '../lib/market_history_chart'
-import { getActiveValidators, getTotalStacked, getCurrentCycleBlocks, getCycleEnd } from '../lib/smart_contract/consensus'
+import { getActiveValidators, getTotalStaked, getCurrentCycleBlocks, getCycleEnd } from '../lib/smart_contract/consensus'
 
 const BATCH_THRESHOLD = 6
 
@@ -118,7 +118,7 @@ function baseReducer (state = initialState, action) {
       return Object.assign({}, state, { transactionsLoading: false })
     case 'RECEIVED_NEW_VALIDATOR_COUNT':
       return Object.assign({}, state, { validatorCount: action.msg })
-    case 'RECEIVED_NEW_STACK_COUNT':
+    case 'RECEIVED_NEW_STAKE_COUNT':
       return Object.assign({}, state, { stackCount: action.msg })
     case 'RECEIVED_CURRENT_CYCLE_BLOCKS':
       return Object.assign({}, state, { currentCycleBlocks: action.msg })
@@ -331,10 +331,10 @@ if ($chainDetailsPage.length) {
     }
   ).subscribe()
 
-  poll(getTotalStacked, 5000,
+  poll(getTotalStaked, 5000,
     (data) => {
       store.dispatch({
-        type: 'RECEIVED_NEW_STACK_COUNT',
+        type: 'RECEIVED_NEW_STAKE_COUNT',
         msg: data
       })
     }

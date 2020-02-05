@@ -33,7 +33,7 @@ export async function getActiveValidators () {
   return validators && validators.length
 }
 
-export async function getTotalStacked () {
+export async function getTotalStaked () {
   const total = await web3.eth.getBalance(CONSENSUS_ADDRESS)
   const dec = await decimals()
   return total / dec
