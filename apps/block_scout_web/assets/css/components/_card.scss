@@ -234,40 +234,57 @@ $card-tab-icon-color-active: #20b760 !default;
   }
 }
 
-.dashboard-banner-card-title {
-  font-size: 14px;
-  color: #9a9a9a;
+.dashboard-banner-container {
 
-  &+i {
-    font-size: 1rem;
+  .card {
+    box-shadow: none;
+    min-height: 210px;
+
+    .cycle-icon {
+      position: absolute;
+      right: 20px;
+      top: 30px;
+    }
+
+    .dashboard-banner-card-title {
+      font-size: 14px;
+      color: #9a9a9a;
+    }
+    
+    .dashboard-banner-card-value {
+      font-size: 1.75rem;
+      color: #8291A0; 
+    
+      .symbol {
+        font-size: 14px;
+      }
+    }
+    
+    .dashboard-banner-card-value.dashboard-banner-card-value-small {
+      font-size: 1rem;
+    }
   }
 
-  &+.fa-exchange-alt {
-    color: var(--green);
+  .progress-circle {
+    position: relative;
+    display: flex;
+    align-items: center;
   }
 
-  &+.fa-wallet {
-    color: var(--purple);
+  .progress-value-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
-  &+.fa-database {
-    color: var(--yellow);
-  }
-
-  &+.fa-users {
-    color: var(--orange);
-  }
-
-  &+.fa-circle-notch {
-    color: var(--yellow);
+  .progress-value {
+    color: #49687c;
+    font-size: 26px;
   }
 }
 
-.dashboard-banner-card-value {
-  font-size: 1.5rem;
-  color: #a3a9b5; 
-
-  .symbol {
-    font-size: 14px;
-  }
-}

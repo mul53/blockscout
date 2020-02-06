@@ -5,10 +5,11 @@ import numeral from 'numeral'
 import socket from '../socket'
 import { exchangeRateChannel, formatUsdValue } from '../lib/currency'
 import { createStore, connectElements } from '../lib/redux_helpers.js'
-import { batchChannel, poll } from '../lib/utils'
+import { batchChannel, poll, secondsToDhms } from '../lib/utils'
 import listMorph from '../lib/list_morph'
 import { createMarketHistoryChart } from '../lib/market_history_chart'
 import { getActiveValidators, getTotalStaked, getCurrentCycleBlocks, getCycleEnd } from '../lib/smart_contract/consensus'
+import { createCycleEndProgressCircle } from '../lib/cycle_end_progress'
 
 const BATCH_THRESHOLD = 6
 
@@ -149,6 +150,7 @@ function withMissingBlocks (reducer) {
 }
 
 let chart
+let cycleEndProgressCircle
 const elements = {
   '[data-chart="marketHistoryChart"]': {
     load ($el) {
@@ -280,7 +282,17 @@ const elements = {
   '[data-selector="cycle-end"]': {
     render ($el, state, oldState) {
       if (state.cycleEnd === oldState.cycleEnd) return
-      $el.empty().append(state.cycleEnd)
+      $el.empty().append(secondsToDhms(state.cycleEnd))
+    }
+  },
+  '[data-selector="cycle-end-progress-circle"]': {
+    load ($el) {
+      cycleEndProgressCircle = createCycleEndProgressCircle($el)
+    },
+    render ($el, state, oldState) {
+      if (!cycleEndProgressCircle || state.cycleEnd === oldState.cycleEnd) return
+      const value = 1 - (state.cycleEnd / (3600 * 24))
+      cycleEndProgressCircle.set(value)
     }
   }
 }
