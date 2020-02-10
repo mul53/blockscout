@@ -276,7 +276,7 @@ const elements = {
   '[data-selector="current-cycle-blocks"]': {
     render ($el, state, oldState) {
       if (state.currentCycleBlocks === oldState.currentCycleBlocks) return
-      $el.empty().append(state.currentCycleBlocks)
+      $el.empty().append(state.currentCycleBlocks.join(' - '))
     }
   },
   '[data-selector="cycle-end"]': {
@@ -290,8 +290,10 @@ const elements = {
       cycleEndProgressCircle = createCycleEndProgressCircle($el)
     },
     render ($el, state, oldState) {
-      if (!cycleEndProgressCircle || state.cycleEnd === oldState.cycleEnd) return
-      const value = 1 - (state.cycleEnd / (3600 * 24))
+      if (!cycleEndProgressCircle || !state.currentCycleBlocks || state.cycleEnd === oldState.cycleEnd) return
+      const [cycleStartBlock, cycleEndBlock] = state.currentCycleBlocks
+      const cycleLength = (cycleEndBlock - cycleStartBlock) * 5
+      const value = 1 - (state.cycleEnd / cycleLength)
       cycleEndProgressCircle.set(value)
     }
   }
@@ -361,7 +363,7 @@ if ($chainDetailsPage.length) {
     }
   ).subscribe()
 
-  poll(getCycleEnd, 5000,
+  poll(getCycleEnd, 1000,
     (data) => {
       store.dispatch({
         type: 'RECEIVED_CYCLE_END_COUNT',

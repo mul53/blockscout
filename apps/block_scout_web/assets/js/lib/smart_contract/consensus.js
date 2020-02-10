@@ -47,5 +47,5 @@ export async function getCycleEnd () {
 export async function getCurrentCycleBlocks () {
   const startBlock = await currentCycleStartBlock()
   const endBlock = await currentCycleEndBlock()
-  return `${startBlock}-${endBlock}`
+  return [startBlock, endBlock]
 }
