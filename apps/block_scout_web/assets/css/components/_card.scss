@@ -241,6 +241,10 @@ $card-tab-icon-color-active: #20b760 !default;
     min-height: 210px;
     max-height: 210px;
 
+    @include media-breakpoint-down(sm) {
+      max-height: none;
+    }
+
     .cycle-icon {
       position: absolute;
       right: 20px;
