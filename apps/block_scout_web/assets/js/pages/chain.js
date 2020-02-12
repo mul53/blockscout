@@ -5,7 +5,7 @@ import numeral from 'numeral'
 import socket from '../socket'
 import { exchangeRateChannel, formatUsdValue } from '../lib/currency'
 import { createStore, connectElements } from '../lib/redux_helpers.js'
-import { batchChannel, poll, secondsToDhms } from '../lib/utils'
+import { batchChannel, poll, calcCycleEndPercent, calcCycleLength } from '../lib/utils'
 import listMorph from '../lib/list_morph'
 import { createMarketHistoryChart } from '../lib/market_history_chart'
 import { getActiveValidators, getTotalStaked, getCurrentCycleBlocks, getCycleEnd } from '../lib/smart_contract/consensus'
@@ -279,12 +279,6 @@ const elements = {
       $el.empty().append(state.currentCycleBlocks.join(' - '))
     }
   },
-  '[data-selector="cycle-end"]': {
-    render ($el, state, oldState) {
-      if (state.cycleEnd === oldState.cycleEnd) return
-      $el.empty().append(secondsToDhms(state.cycleEnd))
-    }
-  },
   '[data-selector="cycle-end-progress-circle"]': {
     load ($el) {
       cycleEndProgressCircle = createCycleEndProgressCircle($el)
@@ -292,9 +286,8 @@ const elements = {
     render ($el, state, oldState) {
       if (!cycleEndProgressCircle || !state.currentCycleBlocks || state.cycleEnd === oldState.cycleEnd) return
       const [cycleStartBlock, cycleEndBlock] = state.currentCycleBlocks
-      const cycleLength = (cycleEndBlock - cycleStartBlock) * 5
-      const value = 1 - (state.cycleEnd / cycleLength)
-      cycleEndProgressCircle.set(value)
+      const cycleLength = calcCycleLength(cycleStartBlock, cycleEndBlock)
+      cycleEndProgressCircle.set(calcCycleEndPercent(state.cycleEnd, cycleLength))
     }
   }
 }
@@ -363,7 +356,7 @@ if ($chainDetailsPage.length) {
     }
   ).subscribe()
 
-  poll(getCycleEnd, 1000,
+  poll(getCycleEnd, 5000,
     (data) => {
       store.dispatch({
         type: 'RECEIVED_CYCLE_END_COUNT',

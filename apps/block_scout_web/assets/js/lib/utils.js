@@ -38,3 +38,11 @@ export function poll (fn, ms, cb) {
     repeat()
   )
 }
+
+export function calcCycleLength (cycleStartBlock, cycleEndBlock) {
+  return (cycleEndBlock - cycleStartBlock) * 5
+}
+
+export function calcCycleEndPercent (cycleEnd, cycleLength) {
+  return 1 - (cycleEnd / cycleLength)
+}

@@ -83,7 +83,7 @@
                 </svg>
               </div>
               <div class="dashboard-banner-card-value">
-                <span data-selector="validator-count"></span> Validators
+                <span data-selector="validator-count"></span> Validators <a class="validator-info-url" href="<%= Application.get_env(:block_scout_web, :validators_info_url) %>" target="_blank">show all</a>
               </div>
             </div>
           </div>
