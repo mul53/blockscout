@@ -30,7 +30,11 @@ export const initialState = {
   transactionsLoading: true,
   transactionCount: null,
   usdMarketCap: null,
-  blockCount: null
+  blockCount: null,
+  validatorCount: null,
+  stackCount: null,
+  currentCycleBlocks: null,
+  cycleEnd: null
 }
 
 export const reducer = withMissingBlocks(baseReducer)
@@ -136,6 +140,14 @@ function baseReducer (state = initialState, action) {
       return Object.assign({}, state, { transactionsError: true })
     case 'FINISH_TRANSACTIONS_FETCH':
       return Object.assign({}, state, { transactionsLoading: false })
+    case 'RECEIVED_NEW_VALIDATOR_COUNT':
+      return Object.assign({}, state, { validatorCount: action.msg })
+    case 'RECEIVED_NEW_STAKE_COUNT':
+      return Object.assign({}, state, { stackCount: action.msg })
+    case 'RECEIVED_CURRENT_CYCLE_BLOCKS':
+      return Object.assign({}, state, { currentCycleBlocks: action.msg })
+    case 'RECEIVED_CYCLE_END_COUNT':
+      return Object.assign({}, state, { cycleEnd: action.msg })
     default:
       return state
   }
@@ -161,6 +173,7 @@ function withMissingBlocks (reducer) {
 }
 
 let chart
+let cycleEndProgressCircle
 const elements = {
   '[data-chart="historyChart"]': {
     load () {
@@ -277,6 +290,35 @@ const elements = {
       if (!state.transactionsBatch.length) return $channelBatching.hide()
       $channelBatching.show()
       $el[0].innerHTML = numeral(state.transactionsBatch.length).format()
+    }
+  },
+  '[data-selector="validator-count"]': {
+    render ($el, state, oldState) {
+      if (state.validatorCount === oldState.validatorCount) return
+      $el.empty().append(state.validatorCount)
+    }
+  },
+  '[data-selector="stack-count"]': {
+    render ($el, state, oldState) {
+      if (state.stackCount === oldState.stackCount) return
+      $el.empty().append(numeral(state.stackCount).format('0,0'))
+    }
+  },
+  '[data-selector="current-cycle-blocks"]': {
+    render ($el, state, oldState) {
+      if (state.currentCycleBlocks === oldState.currentCycleBlocks) return
+      $el.empty().append(state.currentCycleBlocks.join(' - '))
+    }
+  },
+  '[data-selector="cycle-end-progress-circle"]': {
+    load ($el) {
+      cycleEndProgressCircle = createCycleEndProgressCircle($el)
+    },
+    render ($el, state, oldState) {
+      if (!cycleEndProgressCircle || !state.currentCycleBlocks || state.cycleEnd === oldState.cycleEnd) return
+      const [cycleStartBlock, cycleEndBlock] = state.currentCycleBlocks
+      const cycleLength = calcCycleLength(cycleStartBlock, cycleEndBlock)
+      cycleEndProgressCircle.set(calcCycleEndPercent(state.cycleEnd, cycleLength))
     }
   }
 }

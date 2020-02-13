@@ -1,4 +1,4 @@
-<div class='dashboard-banner-container' data-page="chain-details">
+<div class='dashboard-banner-container pt-5' data-page="chain-details">
   <div class="container">
     <div class="dashboard-banner">
       <!-- Graph and legend -->

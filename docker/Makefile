@@ -226,6 +226,15 @@ endif
 ifdef GAS_PRICE
 	BLOCKSCOUT_CONTAINER_PARAMS += -e 'GAS_PRICE=$(GAS_PRICE)'
 endif
+ifdef PROVIDER_URL
+	BLOCKSCOUT_CONTAINNER_PARAMS += -e 'PROVIDER_URL=$(PROVIDER_URL)'
+endif
+ifdef CONSENSUS_ADDRESS
+	BLOCKSCOUT_CONTAINNER_PARAMS += -e 'CONSENSUS_ADDRESS=$(CONSENSUS_ADDRESS)'
+endif
+ifdef VALIDATORS_INFO_URL
+	BLOCKSCOUT_CONTAINNER_PARAMS += -e 'VALIDATORS_INFO_URL=$(VALIDATORS_INFO_URL)'
+endif
 
 HAS_BLOCKSCOUT_IMAGE := $(shell docker images | grep ${DOCKER_IMAGE})
 
@@ -236,7 +245,10 @@ ifdef HAS_BLOCKSCOUT_IMAGE
 	@echo "==> Image exist. Using $(DOCKER_IMAGE)"
 else
 	@echo "==> No image found trying to build one..."
-	@docker build --build-arg COIN="$(COIN)" -f ./Dockerfile -t $(DOCKER_IMAGE) ../
+	@docker build --build-arg COIN="$(COIN)" \
+	 				--build-arg PROVIDER_URL="$(PROVIDER_URL)" \
+					--build-arg CONSENSUS_ADDRESS="$(CONSENSUS_ADDRESS)" \
+					-f ./Dockerfile -t $(DOCKER_IMAGE) ../
 endif
 
 migrate: build
