@@ -56,8 +56,6 @@ defmodule Explorer.Chain do
     Token.Instance,
     TokenTransfer,
     Transaction,
-    TransactionCountCache,
-    TransactionsCache,
     Wei
   }
 
@@ -1039,7 +1037,6 @@ defmodule Explorer.Chain do
       )
 
     query
-    |> with_decompiled_code_flag(hash, query_decompiled_code_flag)
     |> Repo.one()
     |> case do
       nil -> {:error, :not_found}
@@ -1357,33 +1354,6 @@ defmodule Explorer.Chain do
         where: address.hash == ^hash
       )
 
-    query_with_decompiled_flag = with_decompiled_code_flag(query, hash)
-
-    address = Repo.one(query_with_decompiled_flag)
-
-    if address do
-      {:ok, address}
-    else
-      {:error, :not_found}
-    end
-  end
-
-  @spec find_decompiled_contract_address(Hash.t()) :: {:ok, Address.t()} | {:error, :not_found}
-  def find_decompiled_contract_address(%Hash{byte_count: unquote(Hash.Address.byte_count())} = hash) do
-    query =
-      from(
-        address in Address,
-        preload: [
-          :contracts_creation_internal_transaction,
-          :names,
-          :smart_contract,
-          :token,
-          :contracts_creation_transaction,
-          :decompiled_smart_contracts
-        ],
-        where: address.hash == ^hash
-      )
-
     address = Repo.one(query)
 
     if address do
@@ -1652,17 +1622,6 @@ defmodule Explorer.Chain do
       )
 
     Repo.one!(query) || 0
-  end
-
-  @spec fetch_count_consensus_block() :: non_neg_integer
-  def fetch_count_consensus_block do
-    query =
-      from(block in Block,
-        select: count(block.hash),
-        where: block.consensus == true
-      )
-
-    Repo.one!(query)
   end
 
   @doc """
@@ -2155,37 +2114,6 @@ defmodule Explorer.Chain do
   @spec stream_pending_transactions(
           fields :: [
             :block_hash
-            | :created_contract_code_indexed_at
-            | :from_address_hash
-            | :gas
-            | :gas_price
-            | :hash
-            | :index
-            | :input
-            | :nonce
-            | :r
-            | :s
-            | :to_address_hash
-            | :v
-            | :value
-          ],
-          initial :: accumulator,
-          reducer :: (entry :: term(), accumulator -> accumulator)
-        ) :: {:ok, accumulator}
-        when accumulator: term()
-  def stream_pending_transactions(fields, initial, reducer) when is_function(reducer, 2) do
-    query =
-      Transaction
-      |> pending_transactions_query()
-      |> select(^fields)
-
-    Repo.stream_reduce(query, initial, reducer)
-  end
-
-  @spec stream_pending_transactions(
-          fields :: [
-            :block_hash
-            | :internal_transactions_indexed_at
             | :created_contract_code_indexed_at
             | :from_address_hash
             | :gas
@@ -3072,46 +3000,6 @@ defmodule Explorer.Chain do
       else
         nil
       end
-    end
-  end
-
-  @doc """
-  Checks if an address is a contract
-  """
-  @spec contract_address?(String.t(), non_neg_integer(), Keyword.t()) :: boolean() | :json_rpc_error
-  def contract_address?(address_hash, block_number, json_rpc_named_arguments \\ []) do
-    {:ok, binary_hash} = Explorer.Chain.Hash.Address.cast(address_hash)
-
-    query =
-      from(
-        address in Address,
-        where: address.hash == ^binary_hash
-      )
-
-    address = Repo.one(query)
-
-    cond do
-      is_nil(address) ->
-        block_quantity = integer_to_quantity(block_number)
-
-        case EthereumJSONRPC.fetch_codes(
-               [%{block_quantity: block_quantity, address: address_hash}],
-               json_rpc_named_arguments
-             ) do
-          {:ok, %EthereumJSONRPC.FetchedCodes{params_list: fetched_codes}} ->
-            result = List.first(fetched_codes)
-
-            result && !(is_nil(result[:code]) || result[:code] == "" || result[:code] == "0x")
-
-          _ ->
-            :json_rpc_error
-        end
-
-      is_nil(address.contract_code) ->
-        false
-
-      true ->
-        true
     end
   end
 

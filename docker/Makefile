@@ -7,7 +7,6 @@ THIS_FILE = $(lastword $(MAKEFILE_LIST))
 
 DB_URL = postgresql://$(DB_USER):$(DB_PASS)@$(DB_HOST)/$(DB_NAME)?ssl=true
 
-DB_URL = postgresql://postgres:@$(HOST):5432/explorer?ssl=false
 BLOCKSCOUT_CONTAINER_PARAMS = -e 'MIX_ENV=prod' \
 															 -e 'DATABASE_URL=$(DB_URL)'
 ifeq ($(SYSTEM), Linux)
@@ -259,7 +258,7 @@ migrate: build
 
 start: build
 	@echo "==> Starting blockscout"
-	@docker run --rm --name $(BS_CONTAINER_NAME) \
+	@docker run --name $(BS_CONTAINER_NAME) \
 					$(BLOCKSCOUT_CONTAINER_PARAMS) \
 					-p 4000:4000 \
 					--restart=on-failure \

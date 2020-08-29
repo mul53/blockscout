@@ -89,9 +89,6 @@ defmodule Explorer.Chain.Import.Runner.Blocks do
     |> Multi.run(:acquire_contract_address_tokens, fn repo, _ ->
       acquire_contract_address_tokens(repo, consensus_block_numbers)
     end)
-    |> Multi.run(:lose_invalid_neighbour_consensus, fn repo, _ ->
-      lose_invalid_neighbour_consensus(repo, where_invalid_neighbour, insert_options)
-    end)
     |> Multi.run(:delete_address_token_balances, fn repo, _ ->
       delete_address_token_balances(repo, consensus_block_numbers, insert_options)
     end)
@@ -248,7 +245,6 @@ defmodule Explorer.Chain.Import.Runner.Blocks do
           difficulty: fragment("EXCLUDED.difficulty"),
           gas_limit: fragment("EXCLUDED.gas_limit"),
           gas_used: fragment("EXCLUDED.gas_used"),
-          internal_transactions_indexed_at: fragment("EXCLUDED.internal_transactions_indexed_at"),
           miner_hash: fragment("EXCLUDED.miner_hash"),
           nonce: fragment("EXCLUDED.nonce"),
           number: fragment("EXCLUDED.number"),
@@ -267,8 +263,7 @@ defmodule Explorer.Chain.Import.Runner.Blocks do
           fragment("EXCLUDED.miner_hash <> ?", block.miner_hash) or fragment("EXCLUDED.nonce <> ?", block.nonce) or
           fragment("EXCLUDED.number <> ?", block.number) or fragment("EXCLUDED.parent_hash <> ?", block.parent_hash) or
           fragment("EXCLUDED.size <> ?", block.size) or fragment("EXCLUDED.timestamp <> ?", block.timestamp) or
-          fragment("EXCLUDED.total_difficulty <> ?", block.total_difficulty) or
-          fragment("EXCLUDED.internal_transactions_indexed_at <> ?", block.internal_transactions_indexed_at)
+          fragment("EXCLUDED.total_difficulty <> ?", block.total_difficulty)
     )
   end
 
@@ -337,32 +332,6 @@ defmodule Explorer.Chain.Import.Runner.Blocks do
         timeout: timeout,
         timestamps: timestamps
       )
-    end
-  end
-
-  defp lose_invalid_neighbour_consensus(repo, where_invalid_neighbour, %{
-         timeout: timeout,
-         timestamps: %{updated_at: updated_at}
-       }) do
-    query =
-      from(
-        block in where_invalid_neighbour,
-        update: [
-          set: [
-            consensus: false,
-            updated_at: ^updated_at
-          ]
-        ],
-        select: [:hash, :number]
-      )
-
-    try do
-      {_, result} = repo.update_all(query, [], timeout: timeout)
-
-      {:ok, result}
-    rescue
-      postgrex_error in Postgrex.Error ->
-        {:error, %{exception: postgrex_error, where_invalid_neighbour: where_invalid_neighbour}}
     end
   end
 

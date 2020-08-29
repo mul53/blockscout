@@ -46,12 +46,9 @@ defmodule Indexer.Block.Catchup.Fetcher do
 
   @doc """
   Required named arguments
-
     * `:json_rpc_named_arguments` - `t:EthereumJSONRPC.json_rpc_named_arguments/0` passed to
         `EthereumJSONRPC.json_rpc/2`.
-
   The follow options can be overridden:
-
     * `:blocks_batch_size` - The number of blocks to request in one call to the JSONRPC.  Defaults to
       `#{@blocks_batch_size}`.  Block requests also include the transactions for those blocks.  *These transactions
       are not paginated.*
@@ -63,7 +60,6 @@ defmodule Indexer.Block.Catchup.Fetcher do
     @blocks_concurrency * Block.Fetcher.default_receipts_batch_size() * Block.Fetcher.default_receipts_batch_size()
   }`
       ) receipts can be requested from the JSONRPC at once over all connections.
-
   """
   def task(
         %__MODULE__{
@@ -144,8 +140,7 @@ defmodule Indexer.Block.Catchup.Fetcher do
     with {:import, {:ok, imported} = ok} <- {:import, Chain.import(full_chain_import_options)} do
       async_import_remaining_block_data(
         imported,
-        Map.put(async_import_remaining_block_data_options, :block_rewards, %{errors: block_reward_errors}),
-        json_rpc_named_arguments
+        Map.put(async_import_remaining_block_data_options, :block_rewards, %{errors: block_reward_errors})
       )
 
       ok
@@ -159,7 +154,7 @@ defmodule Indexer.Block.Catchup.Fetcher do
     async_import_block_rewards(block_reward_errors)
     async_import_coin_balances(imported, options)
     async_import_created_contract_codes(imported)
-    async_import_internal_transactions(imported, Keyword.get(json_rpc_named_arguments, :variant))
+    async_import_internal_transactions(imported)
     async_import_tokens(imported)
     async_import_token_balances(imported)
     async_import_uncles(imported)
