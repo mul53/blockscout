@@ -46,7 +46,6 @@ defmodule Explorer.Chain.Block do
    * `timestamp` - When the block was collated
    * `total_difficulty` - the total `difficulty` of the chain until this block.
    * `transactions` - the `t:Explorer.Chain.Transaction.t/0` in this block.
-   * `internal_transactions_indexed_at` - when `internal_transactions` were fetched by `Indexer`.
   """
   @type t :: %__MODULE__{
           consensus: boolean(),

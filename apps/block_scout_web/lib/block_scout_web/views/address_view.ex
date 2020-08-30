@@ -151,10 +151,6 @@ defmodule BlockScoutWeb.AddressView do
     TokenExchangeRate.null?(exchange_rate)
   end
 
-  def empty_exchange_rate?(exchange_rate) do
-    TokenExchangeRate.null?(exchange_rate)
-  end
-
   def balance_percentage(%Address{fetched_coin_balance: _} = address) do
     balance_percentage(address, Chain.total_supply())
   end
@@ -265,12 +261,6 @@ defmodule BlockScoutWeb.AddressView do
   end
 
   def token_title(%Token{name: name, symbol: symbol}), do: "#{name} (#{symbol})"
-
-  def incoming_transaction_count(%Address{} = address) do
-    count = Chain.address_to_incoming_transaction_count(address)
-
-    Cldr.Number.to_string!(count, format: "#,###")
-  end
 
   def trimmed_hash(%Hash{} = hash) do
     string_hash = to_string(hash)

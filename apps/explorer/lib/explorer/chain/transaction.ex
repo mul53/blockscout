@@ -28,7 +28,6 @@ defmodule Explorer.Chain.Transaction do
   }
 
   alias Explorer.Chain.Transaction.{Fork, Status}
-  alias Explorer.Repo
 
   @optional_attrs ~w(block_hash block_number created_contract_address_hash cumulative_gas_used earliest_processing_start
                      error gas_used index created_contract_code_indexed_at status

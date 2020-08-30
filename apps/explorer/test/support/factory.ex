@@ -185,22 +185,6 @@ defmodule Explorer.Factory do
     }
   end
 
-  def contract_method_factory() do
-    %ContractMethod{
-      identifier: Base.decode16!("60fe47b1", case: :lower),
-      abi: %{
-        "constant" => false,
-        "inputs" => [%{"name" => "x", "type" => "uint256"}],
-        "name" => "set",
-        "outputs" => [],
-        "payable" => false,
-        "stateMutability" => "nonpayable",
-        "type" => "function"
-      },
-      type: "function"
-    }
-  end
-
   def block_hash do
     {:ok, block_hash} =
       "block_hash"

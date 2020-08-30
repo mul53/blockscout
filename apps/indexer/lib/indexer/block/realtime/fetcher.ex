@@ -169,7 +169,7 @@ defmodule Indexer.Block.Realtime.Fetcher do
 
   @impl Block.Fetcher
   def import(
-        %Block.Fetcher{json_rpc_named_arguments: json_rpc_named_arguments} = block_fetcher,
+        block_fetcher,
         %{
           address_coin_balances: %{params: address_coin_balances_params},
           address_coin_balances_daily: %{params: address_coin_balances_daily_params},

@@ -46,9 +46,12 @@ defmodule Indexer.Block.Catchup.Fetcher do
 
   @doc """
   Required named arguments
+
     * `:json_rpc_named_arguments` - `t:EthereumJSONRPC.json_rpc_named_arguments/0` passed to
         `EthereumJSONRPC.json_rpc/2`.
+
   The follow options can be overridden:
+
     * `:blocks_batch_size` - The number of blocks to request in one call to the JSONRPC.  Defaults to
       `#{@blocks_batch_size}`.  Block requests also include the transactions for those blocks.  *These transactions
       are not paginated.*
@@ -60,6 +63,7 @@ defmodule Indexer.Block.Catchup.Fetcher do
     @blocks_concurrency * Block.Fetcher.default_receipts_batch_size() * Block.Fetcher.default_receipts_batch_size()
   }`
       ) receipts can be requested from the JSONRPC at once over all connections.
+
   """
   def task(
         %__MODULE__{

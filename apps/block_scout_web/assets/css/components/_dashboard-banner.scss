@@ -256,34 +256,3 @@ $dashboard-banner-chart-axis-font-color: $dashboard-stats-item-value-color !defa
     }
   }
 }
-
-.dashboard-banner-network-stats {
-  column-gap: 25px;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-
-  @include media-breakpoint-down(md) {
-    grid-template-columns: 1fr;
-    row-gap: 20px;
-  }
-
-  @include media-breakpoint-down(sm) {
-    column-gap: 10px;
-    grid-template-columns: 1fr 1fr;
-  }
-
-  @include stats-item($dashboard-stats-item-border-color, $dashboard-stats-item-label-color, $dashboard-stats-item-value-color);
-
-  .dashboard-banner-network-stats-item {
-    @media (max-width: 374px) {
-      padding-left: calc(0.6rem + 4px);
-      padding-right: 0.5rem;
-    }
-  }
-
-  .dashboard-banner-network-stats-value {
-    @media (max-width: 374px) {
-      font-size: 0.9rem;
-    }
-  }
-}

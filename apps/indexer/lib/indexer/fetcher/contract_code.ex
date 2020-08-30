@@ -123,27 +123,6 @@ defmodule Indexer.Fetcher.ContractCode do
 
         merged_addresses_params = Addresses.merge_addresses(addresses_params ++ balance_addresses_params)
 
-        import_with_balances(addresses_params, entries, json_rpc_named_arguments)
-
-      {:error, reason} ->
-        Logger.error(fn -> ["failed to fetch contract codes: ", inspect(reason)] end,
-          error_count: Enum.count(entries)
-        )
-
-        {:retry, entries}
-    end
-  end
-
-  defp import_with_balances(addresses_params, entries, json_rpc_named_arguments) do
-    entries
-    |> coin_balances_request_params()
-    |> EthereumJSONRPC.fetch_balances(json_rpc_named_arguments)
-    |> case do
-      {:ok, fetched_balances} ->
-        balance_addresses_params = balances_params_to_address_params(fetched_balances.params_list)
-
-        merged_addresses_params = Addresses.merge_addresses(addresses_params ++ balance_addresses_params)
-
         case Chain.import(%{
                addresses: %{params: merged_addresses_params},
                timeout: :infinity
