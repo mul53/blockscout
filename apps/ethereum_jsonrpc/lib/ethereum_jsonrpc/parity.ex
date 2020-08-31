@@ -298,13 +298,13 @@ defmodule EthereumJSONRPC.Parity do
     {:error, annotated_error}
   end
 
-  defp trace_replay_block_transactions_requests(id_to_params) when is_map(id_to_params) do
-    Enum.map(id_to_params, fn {id, block_number} ->
-      trace_replay_block_transactions_request(%{id: id, block_number: block_number})
+  defp trace_replay_transaction_requests(id_to_params) when is_map(id_to_params) do
+    Enum.map(id_to_params, fn {id, %{hash_data: hash_data}} ->
+      trace_replay_transaction_request(%{id: id, hash_data: hash_data})
     end)
   end
 
-  defp trace_replay_block_transactions_request(%{id: id, block_number: block_number}) do
-    request(%{id: id, method: "trace_replayBlockTransactions", params: [integer_to_quantity(block_number), ["trace"]]})
+  defp trace_replay_transaction_request(%{id: id, hash_data: hash_data}) do
+    request(%{id: id, method: "trace_replayTransaction", params: [hash_data, ["trace"]]})
   end
 end

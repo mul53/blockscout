@@ -471,7 +471,7 @@ defmodule EthereumJSONRPC.Geth.Call do
       transaction_hash: transaction_hash,
       index: index,
       trace_address: trace_address,
-      type: "create",
+      type: type,
       from_address_hash: from_address_hash,
       gas: gas,
       gas_used: gas_used,

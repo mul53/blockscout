@@ -50,9 +50,6 @@ defmodule Explorer.Chain.Import.Runner.Transactions do
     |> Multi.run(:transactions, fn repo, _ ->
       insert(repo, changes_list, insert_options)
     end)
-    |> Multi.run(:recollated_transactions, fn repo, %{transactions: transactions} ->
-      discard_blocks_for_recollated_transactions(repo, transactions, insert_options)
-    end)
   end
 
   @impl Import.Runner

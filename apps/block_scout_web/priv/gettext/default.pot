@@ -1,15 +1,3 @@
-## This file is a PO Template file.
-##
-## `msgid`s here are often extracted from source code.
-## Add new translations manually only if they're dynamic
-## translations that can't be statically extracted.
-##
-## Run `mix gettext.extract` to bring this file up to
-## date. Leave `msgstr`s empty as changing them here as no
-## effect: edit them in PO (`.po`) files instead.
-msgid ""
-msgstr ""
-
 #, elixir-format
 #: lib/block_scout_web/views/address_token_balance_view.ex:7
 msgid "%{count} token"
@@ -131,11 +119,6 @@ msgstr ""
 #, elixir-format
 #: lib/block_scout_web/templates/api_docs/_action_tile.html.eex:69
 msgid "Action"
-msgstr ""
-
-#, elixir-format
-#: lib/block_scout_web/templates/chain/show.html.eex:49
-msgid "Active validators"
 msgstr ""
 
 #, elixir-format
@@ -1431,8 +1414,8 @@ msgid "This API is provided to support some rpc methods in the exact format spec
 msgstr ""
 
 #, elixir-format
-#: lib/block_scout_web/templates/pending_transaction/index.html.eex:23
-msgid "There are no pending transactions."
+#: lib/block_scout_web/views/block_transaction_view.ex:11
+msgid "This block has not been processed yet."
 msgstr ""
 
 #, elixir-format

@@ -28,7 +28,6 @@ defmodule Explorer.Chain.Transaction do
   }
 
   alias Explorer.Chain.Transaction.{Fork, Status}
-  alias Explorer.Repo
 
   @optional_attrs ~w(block_hash block_number created_contract_address_hash cumulative_gas_used earliest_processing_start
                      error gas_used index created_contract_code_indexed_at status
@@ -205,11 +204,6 @@ defmodule Explorer.Chain.Transaction do
     field(:v, :decimal)
     field(:value, Wei)
     field(:revert_reason, :string)
-
-    # A transient field for deriving old block hash during transaction upserts.
-    # Used to force refetch of a block in case a transaction is re-collated
-    # in a different block. See: https://github.com/poanetwork/blockscout/issues/1911
-    field(:old_block_hash, Hash.Full)
 
     # A transient field for deriving old block hash during transaction upserts.
     # Used to force refetch of a block in case a transaction is re-collated
