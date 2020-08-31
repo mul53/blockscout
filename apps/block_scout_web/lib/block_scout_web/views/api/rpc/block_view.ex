@@ -3,6 +3,7 @@ defmodule BlockScoutWeb.API.RPC.BlockView do
 
   alias BlockScoutWeb.API.RPC.{EthRPCView, RPCView}
   alias Explorer.Chain.{Hash, Wei}
+  alias Explorer.EthRPC, as: EthRPC
 
   def render("block_reward.json", %{block: block, reward: reward}) do
     reward_as_string =
@@ -23,7 +24,7 @@ defmodule BlockScoutWeb.API.RPC.BlockView do
   end
 
   def render("eth_block_number.json", %{number: number, id: id}) do
-    result = encode_quantity(number)
+    result = EthRPC.encode_quantity(number)
 
     EthRPCView.render("show.json", %{result: result, id: id})
   end

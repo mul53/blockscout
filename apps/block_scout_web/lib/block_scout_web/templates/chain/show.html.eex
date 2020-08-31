@@ -21,7 +21,7 @@
               </svg>
               </div>
               <div class="dashboard-banner-card-value" data-selector="transaction-count">
-                <%= Cldr.Number.to_string!(@transaction_estimated_count, format: "#,###") %>
+                <%= BlockScoutWeb.Cldr.Number.to_string!(@transaction_estimated_count, format: "#,###") %>
               </div>
             </div>
             <div class="card-body-row">
@@ -38,7 +38,7 @@
                 </svg>
               </div>
               <div class="dashboard-banner-card-value" data-selector="address-count">
-                <%= Cldr.Number.to_string!(@address_count, format: "#,###") %>
+                <%= BlockScoutWeb.Cldr.Number.to_string!(@address_count, format: "#,###") %>
               </div>
             </div>
           </div>
@@ -145,6 +145,7 @@
       </div>
     </div>
   </div>
+  <script defer data-cfasync="false" src="<%= static_path(@conn, "/js/chain.js") %>"></script>
 </div>
 <section class="container">
   <div class="card card-chain-blocks">

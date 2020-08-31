@@ -17,10 +17,11 @@ defmodule Indexer.Fetcher.BlockReward do
   alias EthereumJSONRPC.FetchedBeneficiaries
   alias Explorer.Chain
   alias Explorer.Chain.{Block, Wei}
+  alias Explorer.Chain.Cache.Accounts
   alias Indexer.{BufferedTask, Tracer}
   alias Indexer.Fetcher.BlockReward.Supervisor, as: BlockRewardSupervisor
   alias Indexer.Fetcher.CoinBalance
-  alias Indexer.Transform.{AddressCoinBalances, Addresses}
+  alias Indexer.Transform.{AddressCoinBalances, AddressCoinBalancesDaily, Addresses}
 
   @behaviour BufferedTask
 
@@ -130,7 +131,9 @@ defmodule Indexer.Fetcher.BlockReward do
         |> add_gas_payments()
         |> import_block_reward_params()
         |> case do
-          {:ok, %{address_coin_balances: address_coin_balances}} ->
+          {:ok, %{address_coin_balances: address_coin_balances, addresses: addresses}} ->
+            Accounts.drop(addresses)
+
             CoinBalance.async_fetch_balances(address_coin_balances)
 
             retry_errors(errors)
@@ -242,9 +245,13 @@ defmodule Indexer.Fetcher.BlockReward do
     addresses_params = Addresses.extract_addresses(%{block_reward_contract_beneficiaries: block_rewards_params})
     address_coin_balances_params_set = AddressCoinBalances.params_set(%{beneficiary_params: block_rewards_params})
 
+    address_coin_balances_daily_params_set =
+      AddressCoinBalancesDaily.params_set(%{beneficiary_params: block_rewards_params})
+
     Chain.import(%{
       addresses: %{params: addresses_params},
       address_coin_balances: %{params: address_coin_balances_params_set},
+      address_coin_balances_daily: %{params: address_coin_balances_daily_params_set},
       block_rewards: %{params: block_rewards_params}
     })
   end

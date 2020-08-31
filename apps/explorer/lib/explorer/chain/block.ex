@@ -7,10 +7,10 @@ defmodule Explorer.Chain.Block do
 
   use Explorer.Schema
 
-  alias Explorer.Chain.{Address, Gas, Hash, Transaction}
+  alias Explorer.Chain.{Address, Gas, Hash, PendingBlockOperation, Transaction}
   alias Explorer.Chain.Block.{Reward, SecondDegreeRelation}
 
-  @optional_attrs ~w(internal_transactions_indexed_at size refetch_needed total_difficulty difficulty)a
+  @optional_attrs ~w(size refetch_needed total_difficulty difficulty)a
 
   @required_attrs ~w(consensus gas_limit gas_used hash miner_hash nonce number parent_hash timestamp)a
 
@@ -63,7 +63,6 @@ defmodule Explorer.Chain.Block do
           timestamp: DateTime.t(),
           total_difficulty: difficulty(),
           transactions: %Ecto.Association.NotLoaded{} | [Transaction.t()],
-          internal_transactions_indexed_at: DateTime.t(),
           refetch_needed: boolean()
         }
 
@@ -78,7 +77,6 @@ defmodule Explorer.Chain.Block do
     field(:size, :integer)
     field(:timestamp, :utc_datetime_usec)
     field(:total_difficulty, :decimal)
-    field(:internal_transactions_indexed_at, :utc_datetime_usec)
     field(:refetch_needed, :boolean)
 
     timestamps()
@@ -97,6 +95,8 @@ defmodule Explorer.Chain.Block do
     has_many(:transaction_forks, Transaction.Fork, foreign_key: :uncle_hash)
 
     has_many(:rewards, Reward, foreign_key: :block_hash)
+
+    has_one(:pending_operations, PendingBlockOperation, foreign_key: :block_hash)
   end
 
   def changeset(%__MODULE__{} = block, attrs) do
@@ -116,11 +116,23 @@ defmodule Explorer.Chain.Block do
   end
 
   def blocks_without_reward_query do
+    consensus_blocks_query =
+      from(
+        b in __MODULE__,
+        where: b.consensus == true
+      )
+
+    validator_rewards =
+      from(
+        r in Reward,
+        where: r.address_type == ^"validator"
+      )
+
     from(
-      b in __MODULE__,
-      left_join: r in Reward,
+      b in subquery(consensus_blocks_query),
+      left_join: r in subquery(validator_rewards),
       on: [block_hash: b.hash],
-      where: is_nil(r.block_hash) and b.consensus == true
+      where: is_nil(r.block_hash)
     )
   end
 
