@@ -36,7 +36,9 @@ config :block_scout_web,
   apps_menu: if(System.get_env("APPS_MENU", "false") == "true", do: true, else: false),
   external_apps: System.get_env("EXTERNAL_APPS"),
   multi_token_bridge_mediator: System.get_env("MULTI_TOKEN_BRIDGE_MEDIATOR"),
-  gas_price: System.get_env("GAS_PRICE", nil)
+  gas_price: System.get_env("GAS_PRICE", nil),
+  provider_url: System.get_env("PROVIDER_URL"),
+  validators_info_url: System.get_env("VALIDATORS_INFO_URL")
 
 config :block_scout_web, BlockScoutWeb.Counters.BlocksIndexedCounter, enabled: true
 

@@ -162,7 +162,9 @@ const appJs =
       ),
       new ContextReplacementPlugin(/moment[\/\\]locale$/, /en/),
       new webpack.DefinePlugin({
-        'process.env.SOCKET_ROOT': JSON.stringify(process.env.SOCKET_ROOT)
+        'process.env.SOCKET_ROOT': JSON.stringify(process.env.SOCKET_ROOT),
+        'process.env.PROVIDER_URL': JSON.stringify(process.env.PROVIDER_URL),
+        'process.env.CONSENSUS_ADDRESS': JSON.stringify(process.env.CONSENSUS_ADDRESS)
       })
     ]
   }
