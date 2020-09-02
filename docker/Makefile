@@ -267,7 +267,7 @@ migrate: build
 
 start: build
 	@echo "==> Starting blockscout"
-	@docker run --name $(BS_CONTAINER_NAME) \
+	@docker run -d --name $(BS_CONTAINER_NAME) \
 					$(BLOCKSCOUT_CONTAINER_PARAMS) \
 					-p 4000:4000 \
 					--restart=on-failure \
