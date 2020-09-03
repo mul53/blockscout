@@ -8,7 +8,7 @@ defmodule Explorer.SmartContract.Reader do
 
   alias EthereumJSONRPC.Contract
   alias Explorer.Chain
-  alias Explorer.Chain.Hash
+  alias Explorer.Chain.{Hash, SmartContract}
 
   @typedoc """
   Map of functions to call with the values for the function to be called with.
@@ -34,6 +34,8 @@ defmodule Explorer.SmartContract.Reader do
   @doc """
   Queries the contract functions on the blockchain and returns the call results.
 
+  Optionally accepts the abi if it has already been fetched.
+
   ## Examples
 
   Note that for this example to work the database must be up to date with the
@@ -57,14 +59,20 @@ defmodule Explorer.SmartContract.Reader do
       )
       # => %{"sum" => {:error, "Data overflow encoding int, data `abc` cannot fit in 256 bits"}}
   """
-  @spec query_verified_contract(Hash.Address.t(), functions()) :: functions_results()
-  def query_verified_contract(address_hash, functions) do
+  @spec query_verified_contract(Hash.Address.t(), functions(), SmartContract.abi() | nil) :: functions_results()
+  def query_verified_contract(address_hash, functions, mabi \\ nil) do
     contract_address = Hash.to_string(address_hash)
 
     abi =
-      address_hash
-      |> Chain.address_hash_to_smart_contract()
-      |> Map.get(:abi)
+      case mabi do
+        nil ->
+          address_hash
+          |> Chain.address_hash_to_smart_contract()
+          |> Map.get(:abi)
+
+        _ ->
+          mabi
+      end
 
     query_contract(contract_address, abi, functions)
   end
@@ -88,10 +96,10 @@ defmodule Explorer.SmartContract.Reader do
   def query_contract(contract_address, abi, functions) do
     requests =
       functions
-      |> Enum.map(fn {function_name, args} ->
+      |> Enum.map(fn {method_id, args} ->
         %{
           contract_address: contract_address,
-          function_name: function_name,
+          method_id: method_id,
           args: args
         }
       end)
@@ -100,7 +108,33 @@ defmodule Explorer.SmartContract.Reader do
     |> query_contracts(abi)
     |> Enum.zip(requests)
     |> Enum.into(%{}, fn {response, request} ->
-      {request.function_name, response}
+      {request.method_id, response}
+    end)
+  end
+
+  @spec query_contract(
+          String.t(),
+          String.t(),
+          term(),
+          functions()
+        ) :: functions_results()
+  def query_contract(contract_address, from, abi, functions) do
+    requests =
+      functions
+      |> Enum.map(fn {method_id, args} ->
+        %{
+          contract_address: contract_address,
+          from: from,
+          method_id: method_id,
+          args: args
+        }
+      end)
+
+    requests
+    |> query_contracts(abi)
+    |> Enum.zip(requests)
+    |> Enum.into(%{}, fn {response, request} ->
+      {request.method_id, response}
     end)
   end
 
@@ -156,69 +190,191 @@ defmodule Explorer.SmartContract.Reader do
   """
   @spec read_only_functions(Hash.t()) :: [%{}]
   def read_only_functions(contract_address_hash) do
-    contract_address_hash
-    |> Chain.address_hash_to_smart_contract()
-    |> Map.get(:abi, [])
-    |> Enum.filter(& &1["constant"])
-    |> fetch_current_value_from_blockchain(contract_address_hash, [])
-    |> Enum.reverse()
+    abi =
+      contract_address_hash
+      |> Chain.address_hash_to_smart_contract()
+      |> Map.get(:abi)
+
+    case abi do
+      nil ->
+        []
+
+      _ ->
+        abi_with_method_id = get_abi_with_method_id(abi)
+
+        abi_with_method_id
+        |> Enum.filter(&(&1["constant"] || &1["stateMutability"] == "view"))
+        |> Enum.map(&fetch_current_value_from_blockchain(&1, abi_with_method_id, contract_address_hash))
+    end
   end
 
-  def fetch_current_value_from_blockchain(
-        [%{"inputs" => []} = function | tail],
-        contract_address_hash,
-        acc
-      ) do
+  def read_only_functions_proxy(contract_address_hash, implementation_address_hash_string) do
+    implementation_abi = Chain.get_implementation_abi(implementation_address_hash_string)
+
+    case implementation_abi do
+      nil ->
+        []
+
+      _ ->
+        implementation_abi_with_method_id = get_abi_with_method_id(implementation_abi)
+
+        implementation_abi_with_method_id
+        |> Enum.filter(&(&1["constant"] || &1["stateMutability"] == "view"))
+        |> Enum.map(&fetch_current_value_from_blockchain(&1, implementation_abi_with_method_id, contract_address_hash))
+    end
+  end
+
+  defp get_abi_with_method_id(abi) do
+    parsed_abi =
+      abi
+      |> ABI.parse_specification()
+
+    abi_with_method_id =
+      abi
+      |> Enum.map(fn target_method ->
+        methods =
+          parsed_abi
+          |> Enum.filter(fn method ->
+            Atom.to_string(method.type) == Map.get(target_method, "type") &&
+              method.function == Map.get(target_method, "name") &&
+              Enum.count(method.input_names) == Enum.count(Map.get(target_method, "inputs")) &&
+              input_types_matched?(method.types, target_method)
+          end)
+
+        if Enum.count(methods) > 0 do
+          method = Enum.at(methods, 0)
+          method_id = Map.get(method, :method_id)
+          method_with_id = Map.put(target_method, "method_id", Base.encode16(method_id, case: :lower))
+          method_with_id
+        else
+          target_method
+        end
+      end)
+
+    abi_with_method_id
+  end
+
+  defp input_types_matched?(types, target_method) do
+    types
+    |> Enum.with_index()
+    |> Enum.all?(fn {target_type, index} ->
+      type_to_compare = Map.get(Enum.at(Map.get(target_method, "inputs"), index), "type")
+      target_type_formatted = format_input_type(target_type)
+      target_type_formatted == type_to_compare
+    end)
+  end
+
+  defp format_input_type(input_type) do
+    case input_type do
+      {:array, {type, size}, array_size} ->
+        Atom.to_string(type) <> Integer.to_string(size) <> "[" <> Integer.to_string(array_size) <> "]"
+
+      {:array, type, array_size} ->
+        Atom.to_string(type) <> "[" <> Integer.to_string(array_size) <> "]"
+
+      {:array, {type, size}} ->
+        Atom.to_string(type) <> Integer.to_string(size) <> "[]"
+
+      {:array, type} ->
+        Atom.to_string(type) <> "[]"
+
+      {type, size} ->
+        Atom.to_string(type) <> Integer.to_string(size)
+
+      type ->
+        Atom.to_string(type)
+    end
+  end
+
+  def fetch_current_value_from_blockchain(function, abi, contract_address_hash) do
     values =
-      fetch_from_blockchain(contract_address_hash, %{
-        name: function["name"],
-        args: function["inputs"],
-        outputs: function["outputs"]
-      })
+      case function do
+        %{"inputs" => []} ->
+          method_id = function["method_id"]
+          args = function["inputs"]
+          outputs = function["outputs"]
 
-    formatted = Map.replace!(function, "outputs", values)
+          contract_address_hash
+          |> query_verified_contract(%{method_id => normalize_args(args)}, abi)
+          |> link_outputs_and_values(outputs, method_id)
 
-    fetch_current_value_from_blockchain(tail, contract_address_hash, [formatted | acc])
+        _ ->
+          link_outputs_and_values(%{}, Map.get(function, "outputs", []), function["method_id"])
+      end
+
+    Map.replace!(function, "outputs", values)
   end
-
-  def fetch_current_value_from_blockchain([function | tail], contract_address_hash, acc) do
-    values = link_outputs_and_values(%{}, Map.get(function, "outputs", []), function["name"])
-
-    formatted = Map.replace!(function, "outputs", values)
-
-    fetch_current_value_from_blockchain(tail, contract_address_hash, [formatted | acc])
-  end
-
-  def fetch_current_value_from_blockchain([], _contract_address_hash, acc), do: acc
 
   @doc """
   Fetches the blockchain value of a function that requires arguments.
   """
-  @spec query_function(String.t(), %{name: String.t(), args: nil}) :: [%{}]
-  def query_function(contract_address_hash, %{name: name, args: nil}) do
-    query_function(contract_address_hash, %{name: name, args: []})
+  @spec query_function(String.t(), %{method_id: String.t(), args: nil}, atom()) :: [%{}]
+  def query_function(contract_address_hash, %{method_id: method_id, args: nil}, type) do
+    query_function(contract_address_hash, %{method_id: method_id, args: []}, type)
   end
 
-  @spec query_function(Hash.t(), %{name: String.t(), args: [term()]}) :: [%{}]
-  def query_function(contract_address_hash, %{name: name, args: args}) do
-    function =
+  @spec query_function(Hash.t(), %{method_id: String.t(), args: [term()]}, atom()) :: [%{}]
+  def query_function(contract_address_hash, %{method_id: method_id, args: args}, type) do
+    abi =
       contract_address_hash
       |> Chain.address_hash_to_smart_contract()
-      |> Map.get(:abi, [])
-      |> Enum.filter(fn function -> function["name"] == name end)
-      |> List.first()
+      |> Map.get(:abi)
 
-    fetch_from_blockchain(contract_address_hash, %{
-      name: name,
-      args: args,
-      outputs: function["outputs"]
-    })
+    final_abi =
+      if type == :proxy do
+        Chain.get_implementation_abi_from_proxy(contract_address_hash, abi)
+      else
+        abi
+      end
+
+    parsed_final_abi =
+      final_abi
+      |> ABI.parse_specification()
+
+    %{outputs: outputs, method_id: method_id} =
+      case parsed_final_abi do
+        nil ->
+          nil
+
+        _ ->
+          function_object = find_function_by_method(parsed_final_abi, method_id)
+
+          %ABI.FunctionSelector{returns: returns, method_id: method_id} = function_object
+
+          outputs = extract_outputs(returns)
+
+          %{outputs: outputs, method_id: method_id}
+      end
+
+    contract_address_hash
+    |> query_verified_contract(%{method_id => normalize_args(args)}, final_abi)
+    |> link_outputs_and_values(outputs, method_id)
   end
 
-  defp fetch_from_blockchain(contract_address_hash, %{name: name, args: args, outputs: outputs}) do
-    contract_address_hash
-    |> query_verified_contract(%{name => normalize_args(args)})
-    |> link_outputs_and_values(outputs, name)
+  defp find_function_by_method(parsed_abi, method_id) do
+    parsed_abi
+    |> Enum.filter(fn %ABI.FunctionSelector{method_id: find_method_id} ->
+      if find_method_id do
+        Base.encode16(find_method_id, case: :lower) == method_id || find_method_id == method_id
+      else
+        find_method_id == method_id
+      end
+    end)
+    |> List.first()
+  end
+
+  defp extract_outputs(returns) do
+    returns
+    |> Enum.map(fn output ->
+      case output do
+        {type, size} ->
+          full_type = Atom.to_string(type) <> Integer.to_string(size)
+          %{"type" => full_type}
+
+        type ->
+          %{"type" => type}
+      end
+    end)
   end
 
   @doc """
@@ -249,8 +405,9 @@ defmodule Explorer.SmartContract.Reader do
     end
   end
 
-  def link_outputs_and_values(blockchain_values, outputs, function_name) do
-    {_, value} = Map.get(blockchain_values, function_name, {:ok, [""]})
+  def link_outputs_and_values(blockchain_values, outputs, method_id) do
+    default_value = Enum.map(outputs, fn _ -> "" end)
+    {_, value} = Map.get(blockchain_values, method_id, {:ok, default_value})
 
     for {output, index} <- Enum.with_index(outputs) do
       new_value(output, List.wrap(value), index)
@@ -261,8 +418,35 @@ defmodule Explorer.SmartContract.Reader do
     Map.put_new(output, "value", bytes_to_string(value))
   end
 
-  defp new_value(%{"type" => "bytes" <> _number} = output, [value], _index) do
+  defp new_value(%{"type" => :address} = output, [value], _index) do
     Map.put_new(output, "value", bytes_to_string(value))
+  end
+
+  defp new_value(%{"type" => "address"} = output, values, index) do
+    Map.put_new(output, "value", bytes_to_string(Enum.at(values, index)))
+  end
+
+  defp new_value(%{"type" => :address} = output, values, index) do
+    Map.put_new(output, "value", bytes_to_string(Enum.at(values, index)))
+  end
+
+  defp new_value(%{"type" => "bytes" <> number_rest} = output, values, index) do
+    if String.contains?(number_rest, "[]") do
+      values_array = Enum.at(values, index)
+
+      values_array_formatted =
+        Enum.map(values_array, fn value ->
+          bytes_to_string(value)
+        end)
+
+      Map.put_new(output, "value", values_array_formatted)
+    else
+      Map.put_new(output, "value", bytes_to_string(Enum.at(values, index)))
+    end
+  end
+
+  defp new_value(%{"type" => "bytes"} = output, values, index) do
+    Map.put_new(output, "value", bytes_to_string(Enum.at(values, index)))
   end
 
   defp new_value(output, [value], _index) do
@@ -275,6 +459,10 @@ defmodule Explorer.SmartContract.Reader do
 
   @spec bytes_to_string(<<_::_*8>>) :: String.t()
   defp bytes_to_string(value) do
-    Hash.to_string(%Hash{byte_count: byte_size(value), bytes: value})
+    if value do
+      Hash.to_string(%Hash{byte_count: byte_size(value), bytes: value})
+    else
+      "0x"
+    end
   end
 end

@@ -8,23 +8,19 @@ const web3 = new Web3(new Web3.providers.HttpProvider(PROVIDER_URL))
 const consensus = new web3.eth.Contract(CONSENSUS_ABI, CONSENSUS_ADDRESS)
 
 async function currentBlockNumber () {
-  const blockNumber = await web3.eth.getBlockNumber()
-  return blockNumber
+  return await web3.eth.getBlockNumber()
 }
 
-async function currentCycleStartBlock () {
-  const block = await consensus.methods.getCurrentCycleStartBlock.call()
-  return block
+async function currentCycleStartBlock() {
+  return await consensus.methods.getCurrentCycleStartBlock.call()
 }
 
 async function decimals () {
-  const d = await consensus.methods.DECIMALS.call()
-  return d
+  return await consensus.methods.DECIMALS.call()
 }
 
 async function currentCycleEndBlock () {
-  const block = await consensus.methods.getCurrentCycleEndBlock.call()
-  return block
+  return await consensus.methods.getCurrentCycleEndBlock.call()
 }
 
 export async function getActiveValidators () {

@@ -3,6 +3,8 @@ defmodule Explorer.SmartContract.Solidity.CodeCompilerTest do
 
   doctest Explorer.SmartContract.Solidity.CodeCompiler
 
+  @moduletag timeout: :infinity
+
   alias Explorer.Factory
   alias Explorer.SmartContract.Solidity.CodeCompiler
 
@@ -53,6 +55,26 @@ defmodule Explorer.SmartContract.Solidity.CodeCompilerTest do
               }} = response
     end
 
+    test "compiles smart contract with default evm version", %{contract_code_info: contract_code_info} do
+      optimize = true
+
+      response =
+        CodeCompiler.run(
+          name: contract_code_info.name,
+          compiler_version: contract_code_info.version,
+          code: contract_code_info.source_code,
+          optimize: optimize,
+          evm_version: "default"
+        )
+
+      assert {:ok,
+              %{
+                "abi" => _,
+                "bytecode" => _,
+                "name" => _
+              }} = response
+    end
+
     test "compiles code with external libraries" do
       Enum.each(@compiler_tests, fn compiler_test ->
         compiler_version = compiler_test["compiler_version"]
@@ -72,9 +94,9 @@ defmodule Explorer.SmartContract.Solidity.CodeCompilerTest do
           )
 
         clean_result = remove_init_data_and_whisper_data(result["bytecode"])
-        expected_result = remove_init_data_and_whisper_data(compiler_test["expected_bytecode"])
+        expected_result = remove_init_data_and_whisper_data(compiler_test["tx_input"])
 
-        assert clean_result == expected_result
+        assert expected_result == clean_result
       end)
     end
 
@@ -146,7 +168,7 @@ defmodule Explorer.SmartContract.Solidity.CodeCompilerTest do
       }
       """
 
-      version = "v0.1.3-nightly.2015.9.25+commit.4457170"
+      version = "v0.1.3+commit.028f561d"
 
       response = CodeCompiler.run(name: name, compiler_version: version, code: code, optimize: optimize)
 
@@ -171,7 +193,8 @@ defmodule Explorer.SmartContract.Solidity.CodeCompilerTest do
           optimize: contract_code_info.optimized
         )
 
-      assert {:error, :compilation} = response
+      assert {:error, :compilation, "Expected pragma, import directive or contract/interface/library definition."} =
+               response
     end
 
     test "returns constructor in abi" do

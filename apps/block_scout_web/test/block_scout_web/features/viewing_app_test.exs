@@ -1,105 +1,144 @@
 defmodule BlockScoutWeb.ViewingAppTest do
   @moduledoc false
 
-  use BlockScoutWeb.FeatureCase, async: true
+  # use BlockScoutWeb.FeatureCase, async: true
 
-  alias BlockScoutWeb.AppPage
-  alias BlockScoutWeb.Counters.BlocksIndexedCounter
-  alias Explorer.Counters.AddressesWithBalanceCounter
+  # alias BlockScoutWeb.AppPage
+  # alias BlockScoutWeb.Counters.BlocksIndexedCounter
+  # alias Explorer.Counters.AddressesCounter
+  # alias Explorer.{Repo}
+  # alias Explorer.Chain.PendingBlockOperation
 
-  setup do
-    start_supervised!(AddressesWithBalanceCounter)
-    AddressesWithBalanceCounter.consolidate()
+  # setup do
+  #   start_supervised!(AddressesCounter)
+  #   AddressesCounter.consolidate()
 
-    :ok
-  end
+  #   :ok
+  # end
 
-  describe "loading bar when indexing" do
-    test "shows blocks indexed percentage", %{session: session} do
-      for index <- 5..9 do
-        insert(:block, number: index)
-      end
+  # describe "loading bar when indexing" do
+  #   test "shows blocks indexed percentage", %{session: session} do
+  #     [block | _] =
+  #       for index <- 5..9 do
+  #         insert(:block, number: index)
+  #       end
 
-      assert Decimal.cmp(Explorer.Chain.indexed_ratio(), Decimal.from_float(0.5)) == :eq
+  #     :transaction
+  #     |> insert()
+  #     |> with_block(block)
 
-      session
-      |> AppPage.visit_page()
-      |> assert_has(AppPage.indexed_status("50% Blocks Indexed"))
-    end
+  #     assert Decimal.cmp(Explorer.Chain.indexed_ratio(), Decimal.from_float(0.5)) == :eq
 
-    test "shows tokens loading", %{session: session} do
-      for index <- 0..9 do
-        insert(:block, number: index)
-      end
+  #     insert(:pending_block_operation, block_hash: block.hash, fetch_internal_transactions: true)
 
-      assert Decimal.cmp(Explorer.Chain.indexed_ratio(), 1) == :eq
+  #     session
+  #     |> AppPage.visit_page()
+  #     |> assert_has(AppPage.indexed_status("50% Blocks Indexed"))
+  #   end
 
-      session
-      |> AppPage.visit_page()
-      |> assert_has(AppPage.indexed_status("Indexing Tokens"))
-    end
+  #   test "shows tokens loading", %{session: session} do
+  #     [block | _] =
+  #       for index <- 0..9 do
+  #         insert(:block, number: index)
+  #       end
 
-    test "updates blocks indexed percentage", %{session: session} do
-      for index <- 5..9 do
-        insert(:block, number: index)
-      end
+  #     :transaction
+  #     |> insert()
+  #     |> with_block(block)
 
-      BlocksIndexedCounter.calculate_blocks_indexed()
+  #     assert Decimal.cmp(Explorer.Chain.indexed_ratio(), 1) == :eq
 
-      assert Decimal.cmp(Explorer.Chain.indexed_ratio(), Decimal.from_float(0.5)) == :eq
+  #     insert(:pending_block_operation, block_hash: block.hash, fetch_internal_transactions: true)
 
-      session
-      |> AppPage.visit_page()
-      |> assert_has(AppPage.indexed_status("50% Blocks Indexed"))
+  #     session
+  #     |> AppPage.visit_page()
+  #     |> assert_has(AppPage.indexed_status("Indexing Tokens"))
+  #   end
 
-      insert(:block, number: 4)
+  #   test "updates blocks indexed percentage", %{session: session} do
+  #     [block | _] =
+  #       for index <- 5..9 do
+  #         insert(:block, number: index)
+  #       end
 
-      BlocksIndexedCounter.calculate_blocks_indexed()
+  #     :transaction
+  #     |> insert()
+  #     |> with_block(block)
 
-      assert_has(session, AppPage.indexed_status("60% Blocks Indexed"))
-    end
+  #     BlocksIndexedCounter.calculate_blocks_indexed()
 
-    test "updates when blocks are fully indexed", %{session: session} do
-      for index <- 1..9 do
-        insert(:block, number: index)
-      end
+  #     assert Decimal.cmp(Explorer.Chain.indexed_ratio(), Decimal.from_float(0.5)) == :eq
 
-      BlocksIndexedCounter.calculate_blocks_indexed()
+  #     insert(:pending_block_operation, block_hash: block.hash, fetch_internal_transactions: true)
 
-      assert Decimal.cmp(Explorer.Chain.indexed_ratio(), Decimal.from_float(0.9)) == :eq
+  #     session
+  #     |> AppPage.visit_page()
+  #     |> assert_has(AppPage.indexed_status("50% Blocks Indexed"))
 
-      session
-      |> AppPage.visit_page()
-      |> assert_has(AppPage.indexed_status("90% Blocks Indexed"))
+  #     insert(:block, number: 4)
 
-      insert(:block, number: 0)
+  #     BlocksIndexedCounter.calculate_blocks_indexed()
 
-      BlocksIndexedCounter.calculate_blocks_indexed()
+  #     assert_has(session, AppPage.indexed_status("60% Blocks Indexed"))
+  #   end
 
-      assert_has(session, AppPage.indexed_status("Indexing Tokens"))
-    end
+  #   test "updates when blocks are fully indexed", %{session: session} do
+  #     [block | _] =
+  #       for index <- 1..9 do
+  #         insert(:block, number: index)
+  #       end
 
-    test "removes message when chain is indexed", %{session: session} do
-      [block | _] =
-        for index <- 0..9 do
-          insert(:block, number: index)
-        end
+  #     :transaction
+  #     |> insert()
+  #     |> with_block(block)
 
-      BlocksIndexedCounter.calculate_blocks_indexed()
+  #     BlocksIndexedCounter.calculate_blocks_indexed()
 
-      assert Decimal.cmp(Explorer.Chain.indexed_ratio(), 1) == :eq
+  #     assert Decimal.cmp(Explorer.Chain.indexed_ratio(), Decimal.from_float(0.9)) == :eq
 
-      session
-      |> AppPage.visit_page()
-      |> assert_has(AppPage.indexed_status("Indexing Tokens"))
+  #     insert(:pending_block_operation, block_hash: block.hash, fetch_internal_transactions: true)
 
-      :transaction
-      |> insert()
-      |> with_block(block, internal_transactions_indexed_at: DateTime.utc_now())
+  #     session
+  #     |> AppPage.visit_page()
+  #     |> assert_has(AppPage.indexed_status("90% Blocks Indexed"))
 
-      BlocksIndexedCounter.calculate_blocks_indexed()
+  #     insert(:block, number: 0)
 
-      refute_has(session, AppPage.still_indexing?())
-    end
-  end
+  #     BlocksIndexedCounter.calculate_blocks_indexed()
+
+  #     assert_has(session, AppPage.indexed_status("Indexing Tokens"))
+  #   end
+
+  #   test "removes message when chain is indexed", %{session: session} do
+  #     [block | _] =
+  #       for index <- 0..9 do
+  #         insert(:block, number: index)
+  #       end
+
+  #     :transaction
+  #     |> insert()
+  #     |> with_block(block)
+
+  #     block_hash = block.hash
+
+  #     insert(:pending_block_operation, block_hash: block_hash, fetch_internal_transactions: true)
+
+  #     BlocksIndexedCounter.calculate_blocks_indexed()
+
+  #     assert Decimal.cmp(Explorer.Chain.indexed_ratio(), 1) == :eq
+
+  #     session
+  #     |> AppPage.visit_page()
+  #     |> assert_has(AppPage.indexed_status("Indexing Tokens"))
+
+  #     Repo.update_all(
+  #       from(p in PendingBlockOperation, where: p.block_hash == ^block_hash),
+  #       set: [fetch_internal_transactions: false]
+  #     )
+
+  #     BlocksIndexedCounter.calculate_blocks_indexed()
+
+  #     refute_has(session, AppPage.still_indexing?())
+  #   end
+  # end
 end

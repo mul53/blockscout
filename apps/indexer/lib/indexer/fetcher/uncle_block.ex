@@ -12,6 +12,7 @@ defmodule Indexer.Fetcher.UncleBlock do
   alias Ecto.Changeset
   alias EthereumJSONRPC.Blocks
   alias Explorer.Chain
+  alias Explorer.Chain.Cache.{Accounts, Uncles}
   alias Explorer.Chain.Hash
   alias Indexer.{Block, BufferedTask, Tracer}
   alias Indexer.Fetcher.UncleBlock
@@ -126,7 +127,9 @@ defmodule Indexer.Fetcher.UncleBlock do
            block_second_degree_relations: %{params: block_second_degree_relations_params},
            transactions: %{params: transactions_params, on_conflict: :nothing}
          }) do
-      {:ok, _} ->
+      {:ok, imported} ->
+        Accounts.drop(imported[:addresses])
+        Uncles.update_from_second_degree_relations(imported[:block_second_degree_relations])
         retry(errors)
 
       {:error, {:import = step, [%Changeset{} | _] = changesets}} ->
@@ -153,7 +156,7 @@ defmodule Indexer.Fetcher.UncleBlock do
 
   @impl Block.Fetcher
   def import(_, options) when is_map(options) do
-    with {:ok, %{block_second_degree_relations: block_second_degree_relations}} = ok <-
+    with {:ok, %{block_second_degree_relations: block_second_degree_relations} = imported} <-
            options
            |> Map.drop(@ignored_options)
            |> uncle_blocks()
@@ -167,7 +170,7 @@ defmodule Indexer.Fetcher.UncleBlock do
 
       UncleBlock.async_fetch_blocks(block_second_degree_relations)
 
-      ok
+      {:ok, imported}
     end
   end
 
