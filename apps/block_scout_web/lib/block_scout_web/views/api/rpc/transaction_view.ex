@@ -68,7 +68,9 @@ defmodule BlockScoutWeb.API.RPC.TransactionView do
       "input" => "#{transaction.input}",
       "gasLimit" => "#{transaction.gas}",
       "gasUsed" => "#{transaction.gas_used}",
+      "gasPrice" => "#{transaction.gas_price.value}",
       "logs" => Enum.map(logs, &prepare_log/1),
+      "revertReason" => "#{transaction.revert_reason}",
       "next_page_params" => next_page_params
     }
   end

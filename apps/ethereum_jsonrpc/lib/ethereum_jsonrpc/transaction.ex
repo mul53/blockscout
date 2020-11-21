@@ -9,7 +9,7 @@ defmodule EthereumJSONRPC.Transaction do
   """
   require Logger
 
-  import EthereumJSONRPC, only: [quantity_to_integer: 1]
+  import EthereumJSONRPC, only: [quantity_to_integer: 1, integer_to_quantity: 1, request: 1]
 
   alias EthereumJSONRPC
 
@@ -308,9 +308,23 @@ defmodule EthereumJSONRPC.Transaction do
   end
 
   def to_elixir(transaction) when is_binary(transaction) do
-    Logger.warn(["Fetched transaction is not full: ", transaction])
+    #    Logger.warn(["Fetched transaction is not full: ", transaction])
 
     nil
+  end
+
+  def eth_call_request(id, block_number, data, to, from, gas, gas_price, value) do
+    block =
+      case block_number do
+        nil -> "latest"
+        block_number -> integer_to_quantity(block_number)
+      end
+
+    request(%{
+      id: id,
+      method: "eth_call",
+      params: [%{to: to, from: from, data: data, gas: gas, gasPrice: gas_price, value: value}, block]
+    })
   end
 
   # double check that no new keys are being missed by requiring explicit match for passthrough
@@ -321,6 +335,10 @@ defmodule EthereumJSONRPC.Transaction do
   defp entry_to_elixir({key, value})
        when key in ~w(blockHash condition creates from hash input jsonrpc publicKey raw to txType),
        do: {key, value}
+
+  # specific to Nethermind client
+  defp entry_to_elixir({"data", value}),
+    do: {"input", value}
 
   defp entry_to_elixir({key, quantity}) when key in ~w(gas gasPrice nonce r s standardV v value) and quantity != nil do
     {key, quantity_to_integer(quantity)}
@@ -348,5 +366,9 @@ defmodule EthereumJSONRPC.Transaction do
       nil -> {key, chain_id}
       _ -> {key, quantity_to_integer(chain_id)}
     end
+  end
+
+  defp entry_to_elixir(_) do
+    {nil, nil}
   end
 end

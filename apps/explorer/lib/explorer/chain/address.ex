@@ -16,12 +16,13 @@ defmodule Explorer.Chain.Address do
     DecompiledSmartContract,
     Hash,
     InternalTransaction,
-    NetVersionCache,
     SmartContract,
     Token,
     Transaction,
     Wei
   }
+
+  alias Explorer.Chain.Cache.NetVersion
 
   @optional_attrs ~w(contract_code fetched_coin_balance fetched_coin_balance_block_number nonce decompiled verified)a
   @required_attrs ~w(hash)a
@@ -60,6 +61,17 @@ defmodule Explorer.Chain.Address do
         }
 
   @derive {Poison.Encoder,
+           except: [
+             :__meta__,
+             :smart_contract,
+             :decompiled_smart_contracts,
+             :token,
+             :contracts_creation_internal_transaction,
+             :contracts_creation_transaction,
+             :names
+           ]}
+
+  @derive {Jason.Encoder,
            except: [
              :__meta__,
              :smart_contract,
@@ -144,7 +156,6 @@ defmodule Explorer.Chain.Address do
     end
   end
 
-  # https://github.com/rsksmart/RSKIPs/blob/master/IPs/RSKIP60.md
   def eth_checksum(hash) do
     string_hash =
       hash
@@ -168,8 +179,9 @@ defmodule Explorer.Chain.Address do
     end)
   end
 
+  # https://github.com/rsksmart/RSKIPs/blob/master/IPs/RSKIP60.md
   def rsk_checksum(hash) do
-    chain_id = NetVersionCache.version()
+    chain_id = NetVersion.get_version()
 
     string_hash =
       hash
@@ -233,6 +245,16 @@ defmodule Explorer.Chain.Address do
       a in Address,
       select: fragment("COUNT(*)"),
       where: a.fetched_coin_balance > ^0
+    )
+  end
+
+  @doc """
+  Counts all the addresses.
+  """
+  def count do
+    from(
+      a in Address,
+      select: fragment("COUNT(*)")
     )
   end
 

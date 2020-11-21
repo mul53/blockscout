@@ -15,7 +15,7 @@ defmodule BlockScoutWeb.BlockView do
       |> Enum.map(&Decimal.to_float(Wei.to(&1.gas_price, :gwei)))
       |> mean()
       |> Kernel.||(0)
-      |> Cldr.Number.to_string!()
+      |> BlockScoutWeb.Cldr.Number.to_string!()
 
     unit_text = gettext("Gwei")
 
@@ -33,7 +33,7 @@ defmodule BlockScoutWeb.BlockView do
     # We do this to trick Dialyzer to not complain about non-local returns caused by bug in Cldr.Unit.to_string! spec
     case :erlang.phash2(1, 1) do
       0 ->
-        Cldr.Unit.to_string!(unit)
+        BlockScoutWeb.Cldr.Unit.to_string!(unit)
 
       1 ->
         # does not occur
@@ -42,7 +42,7 @@ defmodule BlockScoutWeb.BlockView do
   end
 
   def formatted_gas(gas, format \\ []) do
-    Cldr.Number.to_string!(gas, format)
+    BlockScoutWeb.Cldr.Number.to_string!(gas, format)
   end
 
   def formatted_timestamp(%Block{timestamp: timestamp}) do
@@ -52,15 +52,25 @@ defmodule BlockScoutWeb.BlockView do
   def show_reward?([]), do: false
   def show_reward?(_), do: true
 
-  def block_reward_text(%Reward{address_type: :validator}) do
-    gettext("Miner Reward")
+  def block_reward_text(%Reward{address_hash: beneficiary_address, address_type: :validator}, block_miner_address) do
+    if Application.get_env(:explorer, Explorer.Chain.Block.Reward, %{})[:keys_manager_contract_address] do
+      %{payout_key: block_miner_payout_address} = Reward.get_validator_payout_key_by_mining(block_miner_address)
+
+      if beneficiary_address == block_miner_payout_address do
+        gettext("Miner Reward")
+      else
+        gettext("Chore Reward")
+      end
+    else
+      gettext("Miner Reward")
+    end
   end
 
-  def block_reward_text(%Reward{address_type: :emission_funds}) do
+  def block_reward_text(%Reward{address_type: :emission_funds}, _block_miner_address) do
     gettext("Emission Reward")
   end
 
-  def block_reward_text(%Reward{address_type: :uncle}) do
+  def block_reward_text(%Reward{address_type: :uncle}, _block_miner_address) do
     gettext("Uncle Reward")
   end
 
