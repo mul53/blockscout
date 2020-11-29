@@ -11,6 +11,9 @@ import { updateAllCalculatedUsdValues, formatUsdValue } from '../lib/currency'
 import { createStore, connectElements } from '../lib/redux_helpers.js'
 import { batchChannel, showLoader } from '../lib/utils'
 import listMorph from '../lib/list_morph'
+import { calcCycleLength, calcCycleEndPercent, poll } from '../lib/fuse_utils'
+import { getActiveValidators, getTotalStaked, getCurrentCycleBlocks, getCycleEnd  } from '../lib/smart_contract/consensus'
+import { createCycleEndProgressCircle } from '../lib/cycle_end_progress'
 import '../app'
 
 const BATCH_THRESHOLD = 6
@@ -31,7 +34,11 @@ export const initialState = {
   transactionCount: null,
   totalGasUsageCount: null,
   usdMarketCap: null,
-  blockCount: null
+  blockCount: null,
+  validatorCount: null,
+  stackCount: null,
+  currentCycleBlocks: null,
+  cycleEnd: null
 }
 
 export const reducer = withMissingBlocks(baseReducer)
@@ -377,6 +384,42 @@ if ($chainDetailsPage.length) {
     type: 'RECEIVED_UPDATED_TRANSACTION_STATS',
     msg: msg
   }))
+
+  poll(getActiveValidators, 5000,
+    (data) => {
+      store.dispatch({
+        type: 'RECEIVED_NEW_VALIDATOR_COUNT',
+        msg: data
+      })
+    }
+  ).subscribe()
+
+  poll(getTotalStaked, 5000,
+    (data) => {
+      store.dispatch({
+        type: 'RECEIVED_NEW_STAKE_COUNT',
+        msg: data
+      })
+    }
+  ).subscribe()
+
+  poll(getCurrentCycleBlocks, 5000,
+    (data) => {
+      store.dispatch({
+        type: 'RECEIVED_CURRENT_CYCLE_BLOCKS',
+        msg: data
+      })
+    }
+  ).subscribe()
+
+  poll(getCycleEnd, 5000,
+    (data) => {
+      store.dispatch({
+        type: 'RECEIVED_CYCLE_END_COUNT',
+        msg: data
+      })
+    }
+  ).subscribe()
 }
 
 function loadTransactions (store) {

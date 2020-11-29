@@ -370,7 +370,6 @@ defmodule Indexer.Block.Realtime.Fetcher do
     async_import_token_instances(imported)
     async_import_uncles(imported)
     async_import_replaced_transactions(imported)
-    async_import_staking_pools()
   end
 
   defp balances(

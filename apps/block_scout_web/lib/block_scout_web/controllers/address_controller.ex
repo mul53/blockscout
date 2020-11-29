@@ -140,26 +140,4 @@ defmodule BlockScoutWeb.AddressController do
   defp validation_count(address) do
     Chain.address_to_validation_count(address.hash)
   end
-
-  defp transaction_count(address) do
-    if contract?(address) do
-      incoming_transaction_count = Chain.address_to_incoming_transaction_count(address.hash)
-
-      if incoming_transaction_count == 0 do
-        Chain.total_transactions_sent_by_address(address.hash)
-      else
-        incoming_transaction_count
-      end
-    else
-      Chain.total_transactions_sent_by_address(address.hash)
-    end
-  end
-
-  defp validation_count(address) do
-    Chain.address_to_validation_count(address.hash)
-  end
-
-  defp contract?(%{contract_code: nil}), do: false
-
-  defp contract?(%{contract_code: _}), do: true
 end

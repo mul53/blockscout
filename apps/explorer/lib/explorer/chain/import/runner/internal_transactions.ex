@@ -247,35 +247,6 @@ defmodule Explorer.Chain.Import.Runner.InternalTransactions do
   defp acquire_transactions(repo, pending_block_hashes) do
     query =
       from(
-        b in Block,
-        where: b.number in ^block_numbers and b.consensus,
-        select: b.hash,
-        # Enforce Block ShareLocks order (see docs: sharelocks.md)
-        order_by: [asc: b.hash],
-        lock: "FOR UPDATE"
-      )
-
-    {:ok, repo.all(query)}
-  end
-
-  defp acquire_pending_internal_txs(repo, block_hashes) do
-    query =
-      from(
-        pending_ops in PendingBlockOperation,
-        where: pending_ops.block_hash in ^block_hashes,
-        where: pending_ops.fetch_internal_transactions,
-        select: pending_ops.block_hash,
-        # Enforce PendingBlockOperation ShareLocks order (see docs: sharelocks.md)
-        order_by: [asc: pending_ops.block_hash],
-        lock: "FOR UPDATE"
-      )
-
-    {:ok, repo.all(query)}
-  end
-
-  defp acquire_transactions(repo, pending_block_hashes) do
-    query =
-      from(
         t in Transaction,
         where: t.block_hash in ^pending_block_hashes,
         select: map(t, [:hash, :block_hash, :block_number]),

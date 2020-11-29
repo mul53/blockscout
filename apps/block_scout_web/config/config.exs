@@ -42,7 +42,9 @@ config :block_scout_web,
   restricted_list: System.get_env("RESTRICTED_LIST", nil),
   restricted_list_key: System.get_env("RESTRICTED_LIST_KEY", nil),
   dark_forest_addresses: System.get_env("CUSTOM_CONTRACT_ADDRESSES_DARK_FOREST"),
-  circles_addresses: System.get_env("CUSTOM_CONTRACT_ADDRESSES_CIRCLES")
+  circles_addresses: System.get_env("CUSTOM_CONTRACT_ADDRESSES_CIRCLES"),
+  provider_url: System.get_env("PROVIDER_URL"),
+  validators_info_url: System.get_env("VALIDATORS_INFO_URL")
 
 config :block_scout_web, BlockScoutWeb.Counters.BlocksIndexedCounter, enabled: true
 

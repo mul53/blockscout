@@ -124,6 +124,9 @@ $fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
 @import "theme/custom_contracts/dark-forest-theme";
 @import "theme/custom_contracts/circles-theme";
 
+// Fuse Custom Css
+@import "custom/custom.scss";
+
 :export {
   dashboardBannerChartAxisFontColor: $dashboard-banner-chart-axis-font-color;
   dashboardLineColorMarket: $dashboard-line-color-market;

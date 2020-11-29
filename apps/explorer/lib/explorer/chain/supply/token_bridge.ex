@@ -118,16 +118,10 @@ defmodule Explorer.Chain.Supply.TokenBridge do
     end
   end
 
-  defp block_reward_contract do
+  defp burned_coins do
     address = System.get_env("TOKEN_BRIDGE_CONTRACT") || @token_bridge_contract_address
 
-    call_contract(address, @block_reward_contract_abi, @block_reward_contract_params)
-  end
-
-  defp minted_coins do
-    address = block_reward_contract()
-
-    call_contract(address, @total_minted_coins_abi, @total_minted_coins_params)
+    call_contract(address, @total_burned_coins_abi, @total_burned_coins_params)
   end
 
   defp block_reward_contract do
