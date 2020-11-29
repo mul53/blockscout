@@ -21,6 +21,7 @@ import './locale'
 
 import './pages/layout'
 import './pages/dark-mode-switcher'
+import './pages/stakes'
 
 import './lib/clipboard_buttons'
 import './lib/currency'
@@ -34,4 +35,3 @@ import './lib/stop_propagation'
 import './lib/tooltip'
 import './lib/modals'
 import './lib/card_tabs'
-import './lib/next_cycle_time'

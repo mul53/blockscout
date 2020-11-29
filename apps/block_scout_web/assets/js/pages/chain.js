@@ -9,10 +9,8 @@ import numeral from 'numeral'
 import socket from '../socket'
 import { updateAllCalculatedUsdValues, formatUsdValue } from '../lib/currency'
 import { createStore, connectElements } from '../lib/redux_helpers.js'
-import { batchChannel, showLoader, calcCycleLength, calcCycleEndPercent, poll } from '../lib/utils'
+import { batchChannel, showLoader } from '../lib/utils'
 import listMorph from '../lib/list_morph'
-import { getActiveValidators, getTotalStaked, getCurrentCycleBlocks, getCycleEnd } from '../lib/smart_contract/consensus'
-import { createCycleEndProgressCircle } from '../lib/cycle_end_progress'
 import '../app'
 
 const BATCH_THRESHOLD = 6
@@ -31,12 +29,9 @@ export const initialState = {
   transactionsError: false,
   transactionsLoading: true,
   transactionCount: null,
+  totalGasUsageCount: null,
   usdMarketCap: null,
-  blockCount: null,
-  validatorCount: null,
-  stackCount: null,
-  currentCycleBlocks: null,
-  cycleEnd: null
+  blockCount: null
 }
 
 export const reducer = withMissingBlocks(baseReducer)
@@ -200,6 +195,15 @@ const elements = {
       $el.empty().append(numeral(state.transactionCount).format())
     }
   },
+  '[data-selector="total-gas-usage"]': {
+    load ($el) {
+      return { totalGasUsageCount: numeral($el.text()).value() }
+    },
+    render ($el, state, oldState) {
+      if (oldState.totalGasUsageCount === state.totalGasUsageCount) return
+      $el.empty().append(numeral(state.totalGasUsageCount).format())
+    }
+  },
   '[data-selector="block-count"]': {
     load ($el) {
       return { blockCount: numeral($el.text()).value() }
@@ -287,7 +291,7 @@ const elements = {
     }
   },
   '[data-selector="channel-batching-count"]': {
-    render ($el, state, oldState) {
+    render ($el, state, _oldState) {
       const $channelBatching = $('[data-selector="channel-batching-message"]')
       if (!state.transactionsBatch.length) return $channelBatching.hide()
       $channelBatching.show()
@@ -373,42 +377,6 @@ if ($chainDetailsPage.length) {
     type: 'RECEIVED_UPDATED_TRANSACTION_STATS',
     msg: msg
   }))
-
-  poll(getActiveValidators, 5000,
-    (data) => {
-      store.dispatch({
-        type: 'RECEIVED_NEW_VALIDATOR_COUNT',
-        msg: data
-      })
-    }
-  ).subscribe()
-
-  poll(getTotalStaked, 5000,
-    (data) => {
-      store.dispatch({
-        type: 'RECEIVED_NEW_STAKE_COUNT',
-        msg: data
-      })
-    }
-  ).subscribe()
-
-  poll(getCurrentCycleBlocks, 5000,
-    (data) => {
-      store.dispatch({
-        type: 'RECEIVED_CURRENT_CYCLE_BLOCKS',
-        msg: data
-      })
-    }
-  ).subscribe()
-
-  poll(getCycleEnd, 5000,
-    (data) => {
-      store.dispatch({
-        type: 'RECEIVED_CYCLE_END_COUNT',
-        msg: data
-      })
-    }
-  ).subscribe()
 }
 
 function loadTransactions (store) {

@@ -7,7 +7,7 @@ defmodule BlockScoutWeb.AddressTransactionController do
 
   import BlockScoutWeb.Chain, only: [current_filter: 1, paging_options: 1, next_page_params: 3, split_list_by_page: 1]
 
-  alias BlockScoutWeb.TransactionView
+  alias BlockScoutWeb.{AccessHelpers, TransactionView}
   alias Explorer.{Chain, Market}
   alias Explorer.Chain.{AddressTokenTransferCsvExporter, AddressTransactionCsvExporter}
   alias Explorer.ExchangeRates.Token
@@ -30,7 +30,8 @@ defmodule BlockScoutWeb.AddressTransactionController do
     address_options = [necessity_by_association: %{:names => :optional}]
 
     with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
-         {:ok, address} <- Chain.hash_to_address(address_hash, address_options, false) do
+         {:ok, address} <- Chain.hash_to_address(address_hash, address_options, false),
+         {:ok, false} <- AccessHelpers.restricted_access?(address_hash_string, params) do
       options =
         @transaction_necessity_by_association
         |> Keyword.merge(paging_options(params))
@@ -82,6 +83,9 @@ defmodule BlockScoutWeb.AddressTransactionController do
       :error ->
         unprocessable_entity(conn)
 
+      {:restricted_access, _} ->
+        not_found(conn)
+
       {:error, :not_found} ->
         case Chain.Hash.Address.validate(address_hash_string) do
           {:ok, _} ->
@@ -95,7 +99,8 @@ defmodule BlockScoutWeb.AddressTransactionController do
 
   def index(conn, %{"address_id" => address_hash_string} = params) do
     with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
-         {:ok, address} <- Chain.hash_to_address(address_hash) do
+         {:ok, address} <- Chain.hash_to_address(address_hash),
+         {:ok, false} <- AccessHelpers.restricted_access?(address_hash_string, params) do
       render(
         conn,
         "index.html",
@@ -105,6 +110,69 @@ defmodule BlockScoutWeb.AddressTransactionController do
         filter: params["filter"],
         counters_path: address_path(conn, :address_counters, %{"id" => address_hash_string}),
         current_path: current_path(conn)
+      )
+    else
+      :error ->
+        unprocessable_entity(conn)
+
+      {:restricted_access, _} ->
+        not_found(conn)
+
+      {:error, :not_found} ->
+        {:ok, address_hash} = Chain.string_to_address_hash(address_hash_string)
+        address = %Chain.Address{hash: address_hash, smart_contract: nil, token: nil}
+
+        case Chain.Hash.Address.validate(address_hash_string) do
+          {:ok, _} ->
+            render(
+              conn,
+              "index.html",
+              address: address,
+              coin_balance_status: nil,
+              exchange_rate: Market.get_exchange_rate(Explorer.coin()) || Token.null(),
+              filter: params["filter"],
+              counters_path: address_path(conn, :address_counters, %{"id" => address_hash_string}),
+              current_path: current_path(conn)
+            )
+
+          _ ->
+            not_found(conn)
+        end
+    end
+  end
+
+  def token_transfers_csv(conn, %{"address_id" => address_hash_string}) when is_binary(address_hash_string) do
+    with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
+         {:ok, address} <- Chain.hash_to_address(address_hash) do
+      address
+      |> AddressTokenTransferCsvExporter.export()
+      |> Enum.into(
+        conn
+        |> put_resp_content_type("application/csv")
+        |> put_resp_header("content-disposition", "attachment; filename=token_transfers.csv")
+        |> send_chunked(200)
+      )
+    else
+      :error ->
+        unprocessable_entity(conn)
+
+      {:error, :not_found} ->
+        not_found(conn)
+    end
+  end
+
+  def token_transfers_csv(conn, _), do: not_found(conn)
+
+  def transactions_csv(conn, %{"address_id" => address_hash_string}) do
+    with {:ok, address_hash} <- Chain.string_to_address_hash(address_hash_string),
+         {:ok, address} <- Chain.hash_to_address(address_hash) do
+      address
+      |> AddressTransactionCsvExporter.export()
+      |> Enum.into(
+        conn
+        |> put_resp_content_type("application/csv")
+        |> put_resp_header("content-disposition", "attachment; filename=transactions.csv")
+        |> send_chunked(200)
       )
     else
       :error ->
