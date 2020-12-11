@@ -7,7 +7,6 @@ THIS_FILE = $(lastword $(MAKEFILE_LIST))
 
 DB_URL = postgresql://$(DB_USER):$(DB_PASS)@$(DB_HOST)/$(DB_NAME)?ssl=true
 
-DB_URL = postgresql://postgres:@$(HOST):5432/explorer?ssl=false
 BLOCKSCOUT_CONTAINER_PARAMS = -e 'MIX_ENV=prod' \
 															 -e 'DATABASE_URL=$(DB_URL)'
 ifeq ($(SYSTEM), Linux)
@@ -269,6 +268,15 @@ endif
 ifdef DISABLE_KNOWN_TOKENS
 	BLOCKSCOUT_CONTAINER_PARAMS += -e 'DISABLE_KNOWN_TOKENS=$(DISABLE_KNOWN_TOKENS)'
 endif
+ifdef PROVIDER_URL
+	BLOCKSCOUT_CONTAINER_PARAMS += -e 'PROVIDER_URL=$(PROVIDER_URL)'
+endif
+ifdef CONSENSUS_ADDRESS
+	BLOCKSCOUT_CONTAINER_PARAMS += -e 'CONSENSUS_ADDRESS=$(CONSENSUS_ADDRESS)'
+endif
+ifdef VALIDATORS_INFO_URL
+	BLOCKSCOUT_CONTAINER_PARAMS += -e 'VALIDATORS_INFO_URL=$(VALIDATORS_INFO_URL)'
+endif
 
 HAS_BLOCKSCOUT_IMAGE := $(shell docker images | grep -sw ${DOCKER_IMAGE})
 build: 
@@ -320,7 +328,7 @@ endif
 
 start: build
 	@echo "==> Starting blockscout"
-	@docker run --rm --name $(BS_CONTAINER_NAME) \
+	@docker run --name $(BS_CONTAINER_NAME) \
 					$(BLOCKSCOUT_CONTAINER_PARAMS) \
 					-p 4000:4000 \
 					--restart=on-failure \
